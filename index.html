@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Malomba City 3D — Kevin William Malomba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --ink:#1C1B18; --paper:#FFFCF4; --paper-edge:#EDE3C8;
+    --arch:#1E824C; --arch-dark:#155E37; --road-line:#FFE066;
+    --gold:#D4AF37; --glass-bg:rgba(18,22,36,.46); --glass-border:rgba(255,255,255,.16);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%; overflow:hidden; font-family:'Inter',sans-serif; color:#F3ECDA; background:#0d1b2a;}
+  h1,h2,h3{font-family:'Baloo 2',cursive;}
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ---------- START SCREEN — a driver's-license landing card ---------- */
+  #start-screen{
+    position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    background:radial-gradient(circle at 50% 20%, #23305c 0%, #0d1330 55%, #070a1c 100%); overflow:hidden; padding:24px;
+  }
+  #start-screen .skyline{ position:absolute; left:0; right:0; bottom:0; height:34%; opacity:.5; background:
+    linear-gradient(180deg, transparent, #05070f 92%),
+    repeating-linear-gradient(90deg, #131a30 0 26px, #0c1122 26px 52px);
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%);
+            mask-image: linear-gradient(180deg, transparent, #000 40%);
+  }
+  .license-card{
+    position:relative; z-index:2; width:min(420px, 90vw); border-radius:20px; padding:22px 24px 18px;
+    background:linear-gradient(155deg, #16213f 0%, #0c1226 55%, #1b1030 100%);
+    border:1px solid rgba(212,175,55,.55);
+    box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    overflow:hidden;
+  }
+  .license-card::before{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.06;
+    background-image: repeating-linear-gradient(115deg, #fff 0 2px, transparent 2px 26px);
+  }
+  .lic-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .lic-brand{ font-family:'Baloo 2',cursive; font-weight:800; font-size:1rem; color:var(--gold); letter-spacing:.02em; }
+  .lic-brand span{ display:block; font-family:'Inter',sans-serif; font-weight:600; font-size:9px; color:#9AA4BC; letter-spacing:.1em; margin-top:2px; }
+  .lic-flag{ font-size:22px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4)); }
+  .lic-body{ display:flex; gap:16px; align-items:flex-start; }
+  .lic-photo{
+    flex:0 0 auto; width:70px; height:82px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-size:34px; background:linear-gradient(160deg,#2a3862,#131a30); border:1px solid rgba(212,175,55,.4);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05); position:relative; overflow:hidden; cursor:pointer;
+  }
+  .lic-photo img{ width:100%; height:100%; object-fit:cover; }
+  .lic-photo .cam-badge{
+    position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); color:#F3ECDA;
+    font-size:7.5px; font-weight:700; letter-spacing:.02em; text-align:center; padding:2px 0; font-family:'Inter',sans-serif;
+  }
+  .lic-photo input{ display:none; }
+  .lic-fields{ flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .lic-row{ display:flex; flex-direction:column; }
+  .lic-label{ font-size:9px; font-weight:800; letter-spacing:.1em; color:var(--gold); }
+  .lic-value{ font-size:.92rem; font-weight:700; color:#F3ECDA; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lic-strip{ height:14px; margin:16px 0 10px; border-radius:3px; opacity:.85;
+    background-image: repeating-linear-gradient(90deg, #F3ECDA 0 2px, transparent 2px 5px, #F3ECDA 5px 6px, transparent 6px 10px);
+    filter:opacity(.55);
+  }
+  .lic-bottom{ display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; }
+  .lic-sig{ font-family:'Baloo 2',cursive; font-style:italic; font-size:.82rem; color:#9AA4BC; }
+  #start-btn{ width:100%; background:linear-gradient(180deg,#F3D889,var(--gold)); color:#1C1408; border:none; border-radius:14px; padding:15px 28px; font-size:1.05rem; font-weight:800; font-family:'Baloo 2',cursive; box-shadow:0 6px 0 #8f7420, 0 12px 22px rgba(0,0,0,.4); transition:transform .08s ease;}
+  #start-btn:active{ transform:translateY(5px); box-shadow:0 1px 0 #8f7420, 0 5px 12px rgba(0,0,0,.3);}
+  #start-btn .arrow{ display:inline-block; margin-left:6px; animation:nudge 1.1s ease-in-out infinite;}
+  @keyframes nudge{ 0%,100%{transform:translateX(0);} 50%{transform:translateX(6px);} }
+  .start-hint{ position:relative; z-index:2; color:#9AA4BC; opacity:.9; font-size:.8rem; font-weight:500; line-height:1.5; text-align:center; max-width:90vw;}
+  .loading-note{ position:relative; z-index:2; color:#9AA4BC; opacity:.7; font-size:.72rem; text-align:center; }
+  @media (max-width:420px){
+    .license-card{ padding:18px 18px 14px; }
+    .lic-photo{ width:58px; height:70px; font-size:28px; }
+    .lic-value{ font-size:.84rem; }
+  }
+
+  /* ---------- GAME ---------- */
+  #game{ position:fixed; inset:0; }
+  #game[hidden]{ display:none; }
+  #canvas-host{ position:absolute; inset:0; }
+  #canvas-host canvas{ display:block; width:100%; height:100%; }
+
+  #hud{ position:absolute; top:0; left:0; right:0; z-index:30; display:flex; justify-content:space-between; align-items:flex-start; padding:14px 16px; pointer-events:none;}
+  #hud > *{ pointer-events:auto; }
+  #zone-pill{ background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); color:#F3ECDA; padding:9px 16px; border-radius:12px; font-weight:700; font-size:13px; display:flex; align-items:center; gap:8px; border:1px solid var(--glass-border); text-transform:uppercase; letter-spacing:.03em; box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  #zone-pill .dot{ width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px 2px rgba(212,175,55,.8);}
+  #progress-wrap{ background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); color:#F3ECDA; padding:9px 14px; border-radius:999px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; border:1px solid var(--glass-border); box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  #progress-bar{ width:80px; height:6px; border-radius:4px; background:rgba(255,255,255,.18); overflow:hidden;}
+  #progress-fill{ height:100%; width:0%; background:var(--gold); transition:width .1s linear;}
+  #map-btn{ background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); color:#F3ECDA; border:1px solid var(--glass-border); border-radius:999px; padding:9px 15px; font-weight:700; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  #view-btn{ background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); color:#F3ECDA; border:1px solid var(--glass-border); border-radius:999px; padding:9px 15px; font-weight:700; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.25);}
+
+  /* Malombatunes music bar — controls only, the YouTube frame itself stays off-screen */
+  #music-bar{
+    display:flex; align-items:center; gap:8px; background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%);
+    -webkit-backdrop-filter:blur(16px) saturate(160%); border:1px solid rgba(212,175,55,.5); border-radius:999px;
+    padding:7px 8px 7px 14px; box-shadow:0 8px 24px rgba(0,0,0,.25); cursor:pointer; user-select:none;
+    transform-origin:center; transition:transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease, padding .28s ease;
+  }
+  #music-bar.playing{
+    transform:scale(1.14); box-shadow:0 12px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(212,175,55,.35);
+    padding:9px 10px 9px 18px;
+  }
+  #music-bar:active{ transform:scale(0.97); }
+  .music-title{ font-family:'Baloo 2',cursive; font-weight:700; font-size:12.5px; color:#F3ECDA; }
+  .music-eq{ display:flex; align-items:flex-end; gap:2px; height:12px; }
+  .music-eq i{ display:block; width:2.5px; background:var(--gold); border-radius:1px; animation:eq 1s ease-in-out infinite; }
+  .music-eq i:nth-child(1){ height:5px; animation-delay:0s; }
+  .music-eq i:nth-child(2){ height:11px; animation-delay:.2s; }
+  .music-eq i:nth-child(3){ height:7px; animation-delay:.4s; }
+  #music-bar.playing .music-eq i{ animation-play-state:running; }
+  #music-bar:not(.playing) .music-eq i{ animation-play-state:paused; opacity:.4; }
+  @keyframes eq{ 0%,100%{ transform:scaleY(.4);} 50%{ transform:scaleY(1);} }
+  #music-toggle{
+    width:28px; height:28px; border-radius:50%; border:none; background:var(--gold); color:#1C1408;
+    font-size:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,.3);
+    pointer-events:none;
+  }
+  #yt-player-host{ position:fixed; left:-9999px; top:-9999px; width:2px; height:2px; overflow:hidden; opacity:0; pointer-events:none; }
+
+  /* compass */
+  #compass{ position:absolute; left:16px; bottom:22px; z-index:34; width:78px; height:78px; display:flex; align-items:center; justify-content:center; }
+  #compass-dial{
+    position:absolute; inset:0; border-radius:50%; background:var(--glass-bg); backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%);
+    border:1px solid rgba(212,175,55,.5); box-shadow:0 8px 20px rgba(0,0,0,.3); transition:transform .12s linear;
+  }
+  .cdir{ position:absolute; font-size:10px; font-weight:800; color:#C9BFA0; }
+  .cn{ top:5px; left:50%; transform:translateX(-50%); color:var(--gold); }
+  .cs{ bottom:5px; left:50%; transform:translateX(-50%); }
+  .ce{ right:6px; top:50%; transform:translateY(-50%); }
+  .cw{ left:6px; top:50%; transform:translateY(-50%); }
+  #compass-needle{
+    position:absolute; left:50%; top:50%; width:3px; height:26px; margin:-13px 0 0 -1.5px;
+    background:linear-gradient(180deg, var(--gold), transparent); border-radius:3px; transform-origin:50% 100%;
+    pointer-events:none;
+  }
+  #compass-label{ position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:8.5px; font-weight:700; color:#9AA4BC; letter-spacing:.06em; white-space:nowrap; }
+
+  /* guide callout */
+  #guide-callout{
+    position:absolute; top:66px; left:50%; transform:translate(-50%,-10px); z-index:29;
+    background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%);
+    color:#F3ECDA; padding:10px 18px; border-radius:999px; border:1px solid var(--glass-border);
+    font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; opacity:0;
+    transition:opacity .3s ease, transform .3s ease; pointer-events:none; max-width:90vw; text-align:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  #guide-callout.show{ opacity:1; transform:translate(-50%,0); }
+  #guide-callout .figure{ font-size:18px; }
+
+  /* welcome banner — frosted glass, gold trim */
+  #banner{
+    position:absolute; top:112px; left:50%; transform:translate(-50%,-16px); z-index:30;
+    background:var(--glass-bg); backdrop-filter:blur(20px) saturate(170%); -webkit-backdrop-filter:blur(20px) saturate(170%);
+    padding:12px 26px; border-radius:16px; border:1px solid rgba(212,175,55,.55);
+    box-shadow:0 14px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+    font-family:'Baloo 2',cursive; font-weight:700; text-align:center; opacity:0; pointer-events:none;
+    transition:opacity .35s ease, transform .35s ease; max-width:88vw;
+  }
+  #banner.show{ opacity:1; transform:translate(-50%,0); }
+  #banner .eyebrow{ font-family:'Inter',sans-serif; font-weight:700; font-size:10.5px; color:var(--gold); letter-spacing:.08em; display:block; margin-bottom:2px;}
+  #banner h2{ margin:0; font-size:clamp(1.05rem,4vw,1.4rem); color:#F8F3E4;}
+
+  /* content panel — floating glass card */
+  #panel{ position:absolute; left:0; right:0; bottom:0; z-index:25; transform:translateY(130%); transition:transform .34s cubic-bezier(.2,.8,.3,1); display:flex; justify-content:center; padding:0 14px 34px; pointer-events:none;}
+  #panel-inner{ pointer-events:auto; }
+  #panel.show{ transform:translateY(0); }
+  #panel-inner{
+    background:rgba(15,19,32,.58); backdrop-filter:blur(22px) saturate(170%); -webkit-backdrop-filter:blur(22px) saturate(170%);
+    border:1px solid rgba(212,175,55,.4); border-radius:20px;
+    max-width:640px; width:100%; padding:18px 22px 20px;
+    box-shadow:0 18px 44px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+    max-height:40vh; overflow-y:auto; position:relative; color:#F3ECDA;
+  }
+  #panel-inner .tag{ display:inline-block; background:var(--gold); color:#1C1408; font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:999px; margin-bottom:6px; letter-spacing:.03em;}
+  #panel-inner h3{ margin:0 0 2px; font-size:1.25rem; color:#F8F3E4;}
+  #panel-inner .sub{ font-weight:600; color:#C9BFA0; font-size:.9rem; margin-bottom:2px;}
+  #panel-inner .meta{ font-size:.8rem; color:#9AA4BC; font-weight:600; margin-bottom:10px;}
+  #panel-inner ul{ margin:0; padding-left:18px;}
+  #panel-inner li{ font-size:.9rem; line-height:1.42; margin-bottom:5px; color:#E4DECB;}
+  #panel-inner li.street-item{ list-style:none; margin:0 0 12px; padding-bottom:10px; border-bottom:1px solid rgba(212,175,55,.22);}
+  #panel-inner li.street-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0;}
+  .street-item-title{ font-family:'Baloo 2',cursive; font-weight:700; font-size:1rem; color:#F8F3E4;}
+  .street-item-sub{ font-size:.78rem; font-weight:600; color:#9AA4BC; margin:1px 0 5px;}
+  .street-item-bullets{ margin:0; padding-left:16px;}
+  .street-item-bullets li{ font-size:.85rem;}
+  #panel-close{ position:absolute; top:8px; right:10px; background:none; border:none; font-size:20px; color:#C9BFA0; line-height:1; padding:6px;}
+
+  /* map overlay */
+  #map-overlay{ position:fixed; inset:0; z-index:60; background:rgba(6,9,16,.82); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:24px;}
+  #map-overlay[hidden]{ display:none; }
+  #map-card{
+    background:rgba(15,19,32,.7); backdrop-filter:blur(22px) saturate(170%); -webkit-backdrop-filter:blur(22px) saturate(170%);
+    border:1px solid rgba(212,175,55,.4); border-radius:20px; max-width:520px; width:100%; max-height:80vh; overflow-y:auto; padding:18px 18px 8px; position:relative; color:#F3ECDA;
+  }
+  #map-card h3{ margin:0 0 12px; font-size:1.35rem; color:#F8F3E4;}
+  #map-close{ position:absolute; top:12px; right:12px; background:none; border:none; font-size:22px; color:#C9BFA0;}
+  .map-group{ margin-bottom:14px;}
+
+  /* completion modal */
+  #complete-modal{ position:fixed; inset:0; z-index:65; background:rgba(6,9,16,.85); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:24px;}
+  #complete-modal[hidden]{ display:none; }
+  #complete-card{
+    background:rgba(15,19,32,.75); backdrop-filter:blur(22px) saturate(170%); -webkit-backdrop-filter:blur(22px) saturate(170%);
+    border:1px solid rgba(212,175,55,.5); border-radius:22px; max-width:380px; width:100%; padding:30px 26px 26px; position:relative; text-align:center; color:#F3ECDA;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  #complete-close{ position:absolute; top:12px; right:12px; background:none; border:none; font-size:22px; color:#C9BFA0;}
+  .complete-emoji{ font-size:44px; margin-bottom:6px; }
+  #complete-card h3{ margin:0 0 10px; font-size:1.3rem; color:#F8F3E4; }
+  #complete-card p{ margin:0 0 20px; font-size:.9rem; color:#C9BFA0; line-height:1.5; }
+  #whatsapp-link{
+    display:inline-flex; align-items:center; gap:8px; background:#25D366; color:#08240f; font-weight:800;
+    font-family:'Baloo 2',cursive; padding:13px 22px; border-radius:14px; text-decoration:none; font-size:1rem;
+    box-shadow:0 6px 0 #128c3e, 0 12px 22px rgba(0,0,0,.35);
+  }
+  .wa-icon{ font-size:1.15rem; }
+  .map-group h4{ font-family:'Inter',sans-serif; font-size:11px; color:var(--gold); margin:0 0 6px; font-weight:700; letter-spacing:.04em;}
+  .map-item{ width:100%; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px 12px; margin-bottom:7px; font-size:.88rem; font-weight:600; display:flex; justify-content:space-between; align-items:center; color:#F3ECDA;}
+  .map-item small{ font-weight:500; color:#9AA4BC;}
+  .map-item.visited{ background:rgba(212,175,55,.14); border-color:rgba(212,175,55,.5);}
+
+  /* pedal (left) / steering (right) mobile controls */
+  #controls{ position:absolute; left:0; right:0; bottom:0; z-index:35; display:flex; justify-content:space-between; align-items:flex-end; padding:0 16px 16px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); pointer-events:none;}
+  .hint-text{ position:absolute; bottom:170px; left:50%; transform:translateX(-50%); color:#F3ECDA; font-size:12px; font-weight:600; background:var(--glass-bg); backdrop-filter:blur(12px); padding:6px 12px; border-radius:999px; border:1px solid var(--glass-border); opacity:1; transition:opacity .6s ease; pointer-events:none; white-space:nowrap;}
+  .hint-text.hide{ opacity:0;}
+  #pedal-group{ pointer-events:auto; display:flex; flex-direction:row; gap:12px; align-items:flex-end; }
+  #steer-group{ pointer-events:auto; display:flex; gap:12px; align-items:flex-end; }
+  .dbtn{ width:60px; height:60px; border-radius:16px; border:1px solid var(--glass-border); background:var(--glass-bg); backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%); color:#F3ECDA; font-size:22px; font-weight:800; font-family:'Baloo 2',cursive; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; box-shadow:0 8px 20px rgba(0,0,0,.3); user-select:none; touch-action:none;}
+  .dbtn small{ font-size:8px; font-weight:700; letter-spacing:.04em; opacity:.75; font-family:'Inter',sans-serif; }
+  .dbtn:active{ background:rgba(212,175,55,.85); color:#1C1408;}
+  #a-btn{ width:64px; height:64px; }
+  @media (min-width:701px){ #pedal-group, #steer-group{ display:none; } }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:700px){
+    #panel{ padding-bottom:190px; }
+    #compass{ left:12px; bottom:190px; width:64px; height:64px; }
+    #hud{ padding:12px; }
+    #zone-pill{ font-size:11px; padding:7px 12px; }
+    #progress-wrap, #map-btn, #view-btn{ font-size:11px; padding:7px 10px; }
+    #music-bar{ padding:6px 6px 6px 10px; }
+    .music-title{ font-size:11px; }
+    #progress-bar{ width:56px; }
+    .start-card h1{ font-size:clamp(1.8rem, 9vw, 2.6rem); }
+  }
+  @media (max-width:380px){
+    #hud > div:last-child{ gap:6px; }
+    #progress-wrap span, #progress-bar{ display:none; }
+    .music-title{ display:none; }
+  }
+  @media (min-width:1400px){
+    #panel-inner{ max-width:760px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="skyline"></div>
+  <div class="license-card">
+    <div class="lic-top">
+      <div class="lic-brand">MALOMBA CITY<span>MOTOR &amp; TRAVEL AUTHORITY</span></div>
+      <div class="lic-flag">🇰🇪</div>
+    </div>
+    <div class="lic-body">
+      <label class="lic-photo" for="lic-photo-input" id="lic-photo">
+        <img id="lic-photo-content" alt="Kevin William Malomba" onerror="window.handleLicPhotoError && window.handleLicPhotoError(this)" src="https://media.licdn.com/dms/image/v2/D4D03AQF5Gmm4JVd_Vw/profile-displayphoto-crop_800_800/B4DZroOBWfG0AI-/0/1764832583858?e=1790812800&v=beta&t=BmaABGutqauNASX_iR-FFZjXUJrYJ0WA9VEHAd9853o">
+        <span class="cam-badge">📷 Add photo</span>
+        <input type="file" id="lic-photo-input" accept="image/*">
+      </label>
+      <div class="lic-fields">
+        <div class="lic-row"><span class="lic-label">NAME</span><span class="lic-value">Kevin William Malomba</span></div>
+        <div class="lic-row"><span class="lic-label">CLASS</span><span class="lic-value">Full-Stack Web Developer</span></div>
+        <div class="lic-row"><span class="lic-label">ISSUED</span><span class="lic-value">Nairobi, Kenya</span></div>
+        <div class="lic-row"><span class="lic-label">LIC NO.</span><span class="lic-value">MLC-2026-KWM</span></div>
+      </div>
+    </div>
+    <div class="lic-strip"></div>
+    <div class="lic-bottom">
+      <span class="lic-sig">Licensed to drive through this résumé</span>
+      <button id="start-btn">Start the engine <span class="arrow">→</span></button>
+    </div>
+  </div>
+  <div class="start-hint">🖥️ Arrow keys / WASD: throttle &amp; steer &nbsp;·&nbsp; 📱 On-screen D-pad on mobile &nbsp;·&nbsp; 🎥 View button swaps chase / map camera</div>
+  <div class="loading-note" id="loading-note">Loading the city…</div>
+</div>
+
+<!-- GAME -->
+<div id="game" hidden>
+  <div id="canvas-host"></div>
+
+  <div id="hud">
+    <div id="zone-pill"><span class="dot"></span><span id="zone-label">Malomba Avenue</span></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+      <div id="progress-wrap">🏁 <div id="progress-bar"><div id="progress-fill"></div></div> <span id="progress-pct">0%</span></div>
+      <div id="music-bar">
+        <span class="music-eq"><i></i><i></i><i></i></span>
+        <span class="music-title">Malombatunes</span>
+        <button id="music-toggle" aria-label="Play or pause Malombatunes">▶️</button>
+      </div>
+      <button id="view-btn">🎥 View</button>
+      <button id="map-btn">🗺️ Map</button>
+    </div>
+  </div>
+
+  <!-- Malombatunes audio, tucked off-screen — only the music bar above is meant to be seen -->
+  <div id="yt-player-host" aria-hidden="true"><div id="yt-player-frame"></div></div>
+
+  <div id="compass">
+    <div id="compass-dial">
+      <span class="cdir cn">N</span><span class="cdir ce">E</span><span class="cdir cs">S</span><span class="cdir cw">W</span>
+    </div>
+    <div id="compass-needle"></div>
+    <div id="compass-label">HEADING</div>
+  </div>
+
+  <div id="guide-callout"><span class="figure">🧑🏾‍✈️</span><span id="guide-text"></span></div>
+  <div id="banner"><span class="eyebrow">WELCOME TO</span><h2 id="banner-title"></h2></div>
+
+  <div id="panel">
+    <div id="panel-inner">
+      <button id="panel-close">✕</button>
+      <div id="panel-tag-wrap"></div>
+      <h3 id="panel-title"></h3>
+      <div class="sub" id="panel-sub"></div>
+      <div class="meta" id="panel-meta"></div>
+      <ul id="panel-list"></ul>
+    </div>
+  </div>
+
+  <div class="hint-text" id="drive-hint">↑ throttle · ↓ brake/reverse · ← → steer</div>
+
+  <div id="controls">
+    <div id="pedal-group">
+      <button class="dbtn" id="a-btn" aria-label="Accelerate">A<small>GAS</small></button>
+      <button class="dbtn" id="b-btn" aria-label="Brake / reverse">B<small>BRAKE</small></button>
+    </div>
+    <div id="steer-group">
+      <button class="dbtn" id="l-btn" aria-label="Steer left">L<small>LEFT</small></button>
+      <button class="dbtn" id="r-btn" aria-label="Steer right">R<small>RIGHT</small></button>
+    </div>
+  </div>
+
+  <div id="map-overlay" hidden>
+    <div id="map-card">
+      <button id="map-close">✕</button>
+      <h3>City Map</h3>
+      <div id="map-groups"></div>
+    </div>
+  </div>
+
+  <div id="complete-modal" hidden>
+    <div id="complete-card">
+      <button id="complete-close">✕</button>
+      <div class="complete-emoji">🏁</div>
+      <h3>You made it across Malomba City!</h3>
+      <p>Thanks for driving the whole way through Kevin's career. Say hi to him yourself —</p>
+      <a id="whatsapp-link" href="https://wa.me/254759700444?text=Hi%20Kevin%2C%20I%20just%20drove%20through%20Malomba%20City!" target="_blank" rel="noopener">
+        <span class="wa-icon">💬</span> Say hi on WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  // ============================================================
+  // DATA — the resume, laid out as named streets off a main avenue
+  // ============================================================
+  const START_INFO = {
+    title:"Kevin William Malomba", subtitle:"Full-Stack Web Developer", meta:"Nairobi, Kenya", tag:"WELCOME",
+    bullets:[
+      "Career objective: grow as a developer in a role that sharpens both intellect and proficiency, while working hard toward organizational goals.",
+      "📞 +254 759 700 444 · ✉️ kevinmalomba@gmail.com",
+      "🔗 linkedin.com/in/kevin-malomba"
+    ]
+  };
+  const END_INFO = {
+    title:"City Limits", subtitle:"Thanks for the drive.", tag:"THE END",
+    bullets:["📞 +254 759 700 444","✉️ kevinmalomba@gmail.com","🔗 linkedin.com/in/kevin-malomba"]
+  };
+
+  const STREETS = [
+    { key:'experience', name:"Experience Street", side:1, z:520, color:0x123A52, colorCurrent:0x1B5478, len:560, style:'corporate',
+      items:[
+        {title:"Pharmediqa", subtitle:"Medical Sales Representative", meta:"Sep 2018 – Mar 2019", d:70,
+          bullets:["Sold medical equipment to both public and private hospitals."]},
+        {title:"Hue Experiential", subtitle:"Data Entry Clerk", meta:"May 2019 – Feb 2020", d:150,
+          bullets:["Accurate, fast data entry using Microsoft Excel and Google Sheets."]},
+        {title:"National Cancer Institute of Kenya", subtitle:"Program Officer, Cancer Prevention & Awareness", meta:"Feb 2021 – Jan 2022", d:230,
+          bullets:["Managed the institute's Instagram, Facebook, YouTube and LinkedIn accounts.","Planned workshops organized by the institute.","Provided technical assistance during institute workshops."]},
+        {title:"The Jitu", subtitle:"Software Development Apprentice", meta:"Jan 2023 – Mar 2023", d:310,
+          bullets:["Trained on Angular for the front end, Node.js and MySQL for the back end.","Practiced collaboration, business communication and version control."]},
+        {title:"Kenya Bureau of Standards", subtitle:"Laboratory Analyst — Internship", meta:"Apr 2023 – Feb 2024", d:390,
+          bullets:["Set up laboratory equipment for specific test procedures.","Performed chemical tests on materials and samples as requested.","Followed strict safety protocols and protective equipment rules."]},
+        {title:"ABSA Bank Kenya", subtitle:"Customer Service Advisor", meta:"Mar 2024 – May 2025", d:470,
+          bullets:["Built persuasive pitches to sell products and services to customers.","Maintained positive relationships with customers and reached out to new ones.","Resolved customer complaints quickly and efficiently."]},
+        {title:"AWARD (CIFOR–ICRAF)", subtitle:"Web Master", meta:"Jun 2025 – Present", d:540, current:true, tag:"CURRENTLY HERE",
+          bullets:["Updates and maintains the institution's website.","Designs and develops web pages.","Manages and maintains website plugins.","Prepares and analyzes website analytics reports.","Implements SEO strategies."]},
+      ]},
+    { key:'projects', name:"Projects Avenue", side:-1, z:1000, color:0x5B1E7A, len:340, style:'creative',
+      items:[
+        {title:"Malwike Technologies", subtitle:"Company portfolio website", d:70, bullets:["A portfolio site showcasing Malwike Technologies' services and contact details."]},
+        {title:"My Portfolio Website", subtitle:"Personal portfolio", d:150, bullets:["Shows off Kevin's skills, experience and past projects."]},
+        {title:"Malombereads", subtitle:"Article series, Medium", d:230, bullets:["A World Peace series exploring the possibility of global unity and coexistence."]},
+        {title:"Malombaverse", subtitle:"YouTube channel", d:300, bullets:["Focused on music lyric videos and educational content."]},
+      ]},
+    { key:'education', name:"Education Road", side:1, z:1480, color:0x175C3B, len:280, style:'academic',
+      items:[
+        {title:"Moringa School", subtitle:"Certificate, Full Stack Web Development", meta:"Jan 2022 – Jul 2022", d:70,
+          bullets:["Coursework: HTML5, CSS3, JavaScript, Angular, Python, Flask, Django, plus professional skills."]},
+        {title:"JKUAT", subtitle:"BSc, Biochemistry & Molecular Biology", meta:"Sep 2013 – Nov 2017 · First Class Honours", d:160,
+          bullets:["Department of Biochemistry, School of Biomedical Sciences, College of Health Sciences."]},
+        {title:"Utumishi Boys Academy", subtitle:"Kenya Certificate of Secondary Education", meta:"Jan 2009 – Nov 2012 · Grade A-", d:240, bullets:[]},
+      ]},
+    { key:'extracurricular', name:"Extracurricular Lane", side:-1, z:1960, color:0xC1501F, len:150, style:'pavilion',
+      items:[
+        {title:"Ignite Africa Challenge", subtitle:"Semifinalist, African Leadership University", meta:"June 2019 · Kigali, Rwanda", d:70, bullets:[], embassy:"Rwanda", embassyFlag:"🇷🇼"},
+      ]},
+    { key:'references', name:"References Way", side:1, z:2440, color:0x5C1730, len:170, style:'grand',
+      items:[
+        {title:"References Tower", subtitle:"Three people who'll vouch for Kevin", d:90, bullets:[
+          "Dr. Ruth Muia — Head, Cancer Awareness & Prevention Directorate, National Cancer Institute of Kenya · truth2005t@yahoo.com · +254 728 428 921",
+          "Mr. Ted Omolo — Principal Laboratory Analyst, Kenya Bureau of Standards · omolod@kebs.org · +254 732 833 032",
+          "Madam Jane Kaiba — Branch Manager, ABSA Bank, Two Rivers Branch · jane.kaiba@absa.africa · +254 726 722 857"
+        ]},
+      ]},
+  ];
+  const MAIN_HALF = 8;
+  const START_Z = 30;
+  const END_Z = 2760;
+
+  // ============================================================
+  // THREE.JS SCENE
+  // ============================================================
+  const host = document.getElementById('canvas-host');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1b2e);
+  scene.fog = new THREE.Fog(0x1a2740, 90, 480);
+
+  const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.1, 2000);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  host.appendChild(renderer.domElement);
+
+  const hemi = new THREE.HemisphereLight(0x6b6ea8, 0x2a1f30, 0.85);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffd9a8, 0.9);
+  sun.position.set(140, 160, -60);
+  scene.add(sun);
+  scene.add(new THREE.AmbientLight(0x8899ff, 0.22));
+
+  // dusk skybox — deep navy up top fading through violet into a warm horizon glow
+  function makeSkyTexture(){
+    const c = document.createElement('canvas'); c.width = 2; c.height = 512;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0,0,0,512);
+    g.addColorStop(0, '#070b1e');
+    g.addColorStop(0.42, '#1b2350');
+    g.addColorStop(0.72, '#5a3568');
+    g.addColorStop(1, '#e2895a');
+    ctx.fillStyle = g; ctx.fillRect(0,0,2,512);
+    return new THREE.CanvasTexture(c);
+  }
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(900,16,16), new THREE.MeshBasicMaterial({ map:makeSkyTexture(), side:THREE.BackSide, fog:false }));
+  scene.add(sky);
+
+  // ---- canvas label sprite helper ----
+  function makeLabelSprite(text, opts){
+    opts = opts || {};
+    const scale = opts.scale || 1;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const fontSize = opts.fontSize || 44;
+    canvas.width = 512; canvas.height = 128;
+    ctx.font = '800 '+fontSize+'px Baloo 2, Inter, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    // background pill
+    ctx.fillStyle = opts.bg || 'rgba(255,252,244,0.96)';
+    const pad = 18;
+    const w = Math.min(canvas.width - 20, ctx.measureText(text).width + pad*2);
+    const x0 = canvas.width/2 - w/2, y0 = canvas.height/2 - 34;
+    roundRect(ctx, x0, y0, w, 68, 18);
+    ctx.fill();
+    ctx.strokeStyle = opts.border || '#EDE3C8'; ctx.lineWidth = 4;
+    roundRect(ctx, x0, y0, w, 68, 18); ctx.stroke();
+    ctx.fillStyle = opts.color || '#1C1B18';
+    ctx.fillText(text, canvas.width/2, canvas.height/2);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({ map:tex, depthTest:true, transparent:true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(9*scale, 2.25*scale, 1);
+    return sprite;
+  }
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+  function makeSignSprite(lines, opts){
+    opts = opts || {};
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 480; canvas.height = 200;
+    ctx.fillStyle = opts.bg || '#0B4F8A';
+    roundRect(ctx, 6, 6, canvas.width-12, canvas.height-12, 14); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
+    roundRect(ctx, 6, 6, canvas.width-12, canvas.height-12, 14); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.font = '800 40px Inter, sans-serif';
+    ctx.fillText(lines[0], canvas.width/2, 92);
+    if(lines[1]){ ctx.font = '600 24px Inter, sans-serif'; ctx.fillText(lines[1], canvas.width/2, 140); }
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map:tex, transparent:true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(8.4, 3.5, 1);
+    return sprite;
+  }
+
+  // ---- ground ----
+  const groundMat = new THREE.MeshStandardMaterial({ color:0x161c2c, roughness:0.85, metalness:0.05 });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, END_Z+400), groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.set(0, -0.05, END_Z/2);
+  scene.add(ground);
+
+  // ---- dashed road-line texture ----
+  function dashTexture(){
+    const c = document.createElement('canvas'); c.width = 8; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#1b1e28'; ctx.fillRect(0,0,8,64);
+    ctx.fillStyle = '#D4AF37'; ctx.fillRect(2,4,4,28);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+  const roadMat = new THREE.MeshStandardMaterial({ color:0x1b1e28, roughness:0.6, metalness:0.15 });
+
+  function addRoadSegment(x, z, w, l, horizontal){
+    const geo = new THREE.PlaneGeometry(w, l);
+    const mesh = new THREE.Mesh(geo, roadMat);
+    mesh.rotation.x = -Math.PI/2;
+    mesh.position.set(x, 0.01, z);
+    scene.add(mesh);
+    // center dashed line — gold, oriented along whichever axis is the road's length
+    const lineTex = dashTexture();
+    let lineGeo;
+    if(horizontal){ lineTex.repeat.set(w/8, 1); lineGeo = new THREE.PlaneGeometry(w, 0.5); }
+    else { lineTex.repeat.set(1, l/8); lineGeo = new THREE.PlaneGeometry(0.5, l); }
+    const lineMat = new THREE.MeshBasicMaterial({ map:lineTex, transparent:false });
+    const line = new THREE.Mesh(lineGeo, lineMat);
+    line.rotation.x = -Math.PI/2;
+    line.position.set(x, 0.02, z);
+    scene.add(line);
+  }
+
+  function addRoundabout(x, z, r){
+    r = r || 4.2;
+    const round = new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.15,24), new THREE.MeshStandardMaterial({color:0x0e2a22, metalness:0.2, roughness:0.6}));
+    round.position.set(x, 0.05, z);
+    scene.add(round);
+    const curb = new THREE.Mesh(new THREE.CylinderGeometry(r+0.3,r+0.3,0.05,24), new THREE.MeshStandardMaterial({color:0xD4AF37, metalness:0.7, roughness:0.3}));
+    curb.position.set(x, 0.02, z);
+    scene.add(curb);
+    const palm = new THREE.Mesh(new THREE.ConeGeometry(r*0.45, r*0.9, 8), new THREE.MeshStandardMaterial({color:0x1f5c40, roughness:0.6}));
+    palm.position.set(x, r*0.45+0.15, z);
+    scene.add(palm);
+  }
+
+  // main avenue
+  addRoadSegment(0, END_Z/2 + 20, MAIN_HALF*2, END_Z+80);
+
+  // side streets — every one now runs all the way out to a loop road, so the dead end
+  // isn't really dead: a roundabout there feeds into the ring boulevard and on to the next street
+  const STREET_LOOP_LEN = 620;
+  const LOOP_X = MAIN_HALF + STREET_LOOP_LEN;
+  STREETS.forEach(st=>{
+    const cx = st.side * (MAIN_HALF + STREET_LOOP_LEN/2);
+    addRoadSegment(cx, st.z, STREET_LOOP_LEN, 14);
+    addRoundabout(st.side*LOOP_X, st.z, 4.6);
+  });
+
+  // ring boulevard: two long spines at the far edges, closed off at both ends —
+  // drive out any street's roundabout and you're on a loop that leads to every other street
+  addRoadSegment(LOOP_X, END_Z/2+20, 14, END_Z+120);
+  addRoadSegment(-LOOP_X, END_Z/2+20, 14, END_Z+120);
+  addRoadSegment(0, START_Z-40, LOOP_X*2+14, 16, true);
+  addRoadSegment(0, END_Z+40, LOOP_X*2+14, 16, true);
+  addRoundabout(LOOP_X, START_Z-40, 6);
+  addRoundabout(-LOOP_X, START_Z-40, 6);
+  addRoundabout(LOOP_X, END_Z+40, 6);
+  addRoundabout(-LOOP_X, END_Z+40, 6);
+
+  // ---- a huge "MALOMBACITY" board at every true dead end of the road network ----
+  function addCityBoard(x, z, faceAngle){
+    const g = new THREE.Group();
+    const poleMat = new THREE.MeshStandardMaterial({ color:0x2c2c30, metalness:0.5, roughness:0.4 });
+    const poleL = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,12,10), poleMat); poleL.position.set(-6.5,6,0);
+    const poleR = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,12,10), poleMat); poleR.position.set(6.5,6,0);
+    g.add(poleL, poleR);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1024; canvas.height = 320;
+    const grad = ctx.createLinearGradient(0,0,0,320);
+    grad.addColorStop(0,'#1b1030'); grad.addColorStop(1,'#0a0e1c');
+    ctx.fillStyle = grad;
+    roundRect(ctx,10,10,canvas.width-20,canvas.height-20,26); ctx.fill();
+    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 10;
+    roundRect(ctx,10,10,canvas.width-20,canvas.height-20,26); ctx.stroke();
+    ctx.fillStyle = '#D4AF37'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font = '800 130px Baloo 2, Inter, sans-serif';
+    ctx.fillText('MALOMBACITY', canvas.width/2, canvas.height/2-14);
+    ctx.fillStyle = '#9AA4BC'; ctx.font = '600 34px Inter, sans-serif';
+    ctx.fillText('YOU ARE LEAVING / ENTERING THE CITY', canvas.width/2, canvas.height/2+72);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, side:THREE.DoubleSide });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(14,4.4), mat);
+    panel.position.set(0, 10.6, 0);
+    g.add(panel);
+    g.position.set(x,0,z);
+    if(faceAngle) g.rotation.y = faceAngle;
+    scene.add(g);
+  }
+  addCityBoard(LOOP_X, START_Z-40, 0);
+  addCityBoard(-LOOP_X, START_Z-40, 0);
+  addCityBoard(LOOP_X, END_Z+40, 0);
+  addCityBoard(-LOOP_X, END_Z+40, 0);
+  // roundabouts where the main avenue itself meets each cross street, so every road end rotates you onward
+  addRoundabout(0, START_Z-40, 5.5);
+  addRoundabout(0, END_Z+40, 5.5);
+
+  // ---- roundabouts + zebra crossings at the main-avenue junctions ----
+  STREETS.forEach(st=>{
+    addRoundabout(st.side*(MAIN_HALF-2), st.z, 4.2);
+  });
+
+  // ---- drivable road corridors, used both for the guard rail collision and to draw the rails ----
+  const DRIVE_MARGIN = 0.2;  // how far the car itself may stray past the nominal road edge
+  const RAIL_MARGIN = 1.6;   // how far out the visible rail sits — clear of the car's body, so it never visually clips
+  const CORRIDORS = [
+    { x1:-MAIN_HALF, x2:MAIN_HALF, z1:START_Z-46, z2:END_Z+46 }, // main avenue
+    { x1:LOOP_X-7, x2:LOOP_X+7, z1:START_Z-46, z2:END_Z+46 },    // right ring boulevard
+    { x1:-LOOP_X-7, x2:-LOOP_X+7, z1:START_Z-46, z2:END_Z+46 },  // left ring boulevard
+    { x1:-LOOP_X-8, x2:LOOP_X+8, z1:START_Z-50, z2:START_Z-30 }, // start cross street
+    { x1:-LOOP_X-8, x2:LOOP_X+8, z1:END_Z+30, z2:END_Z+50 },     // end cross street
+  ];
+  STREETS.forEach(st=>{
+    const lo = Math.min(MAIN_HALF-1, st.side*(MAIN_HALF-1));
+    CORRIDORS.push(
+      st.side>0
+        ? { x1:MAIN_HALF-1, x2:LOOP_X+8, z1:st.z-7, z2:st.z+7 }
+        : { x1:-(LOOP_X+8), x2:-(MAIN_HALF-1), z1:st.z-7, z2:st.z+7 }
+    );
+  });
+  function isOnRoad(x, z){
+    for(let i=0;i<CORRIDORS.length;i++){
+      const c = CORRIDORS[i];
+      if(x >= c.x1-DRIVE_MARGIN && x <= c.x2+DRIVE_MARGIN && z >= c.z1-DRIVE_MARGIN && z <= c.z2+DRIVE_MARGIN) return true;
+    }
+    return false;
+  }
+
+  // ---- guard rails along every corridor edge, with gaps left open at junctions/roundabouts ----
+  function addRailPost(x,z){
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,0.9,6), new THREE.MeshStandardMaterial({color:0xC9D6DF, metalness:0.7, roughness:0.3}));
+    post.position.set(x,0.45,z);
+    scene.add(post);
+  }
+  function addRailLine(fixedIsX, fixedVal, from, to, skipPoints){
+    for(let t = from; t <= to; t += 4.5){
+      const skip = (skipPoints||[]).some(p => Math.abs(t-p) < 12);
+      if(skip) continue;
+      if(fixedIsX) addRailPost(fixedVal, t); else addRailPost(t, fixedVal);
+    }
+    // a thin continuous rail bar just above the posts
+    const barGeo = new THREE.BoxGeometry(fixedIsX?0.08:(to-from), 0.09, fixedIsX?(to-from):0.08);
+    const bar = new THREE.Mesh(barGeo, new THREE.MeshStandardMaterial({color:0xF3ECDA, metalness:0.5, roughness:0.4}));
+    bar.position.set(fixedIsX?fixedVal:(from+to)/2, 0.78, fixedIsX?(from+to)/2:fixedVal);
+    scene.add(bar);
+  }
+  const streetZs = STREETS.map(st=>st.z);
+  // main avenue rails, with gaps at each side-street opening
+  addRailLine(true, -MAIN_HALF-RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  addRailLine(true, MAIN_HALF+RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  // ring boulevard rails, with gaps at each street's dead-end roundabout
+  addRailLine(true, LOOP_X-7-RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  addRailLine(true, LOOP_X+7+RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  addRailLine(true, -LOOP_X-7-RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  addRailLine(true, -LOOP_X+7+RAIL_MARGIN, START_Z-30, END_Z+30, streetZs);
+  // side-street rails, with a gap near the main-avenue junction and the far roundabout
+  STREETS.forEach(st=>{
+    const from = st.side>0 ? MAIN_HALF+5 : -(LOOP_X+2);
+    const to = st.side>0 ? LOOP_X+2 : -(MAIN_HALF+5);
+    addRailLine(false, st.z-7-RAIL_MARGIN, from, to, []);
+    addRailLine(false, st.z+7+RAIL_MARGIN, from, to, []);
+  });
+
+  // ---- generic glass-tower filler skyline along the main avenue ----
+  function box(w,h,d,color){
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshLambertMaterial({color}));
+    mesh.position.y = h/2;
+    return mesh;
+  }
+  const fillerColors = [0x101a30, 0x16213a, 0x1b2a45, 0x241a35, 0x0f2438, 0x2a1030, 0x0f2e28, 0x2e1c0f];
+  for(let z = 60; z < END_Z; z += 46){
+    const onJunction = STREETS.some(st => Math.abs(st.z - z) < 20);
+    if(onJunction) continue;
+    [1,-1].forEach(side=>{
+      if(Math.random() < 0.42) return;
+      const h = 10 + Math.random()*30;
+      const b = box(9, h, 9, fillerColors[Math.floor(Math.random()*fillerColors.length)]);
+      b.material = new THREE.MeshStandardMaterial({ color:b.material.color, metalness:0.55, roughness:0.35 });
+      b.position.x = side*(MAIN_HALF + 12);
+      b.position.z = z + (Math.random()*10-5);
+      scene.add(b);
+      // a thin gold cap so it reads as an elegant tower, not a plain block
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(9.4,0.4,9.4), new THREE.MeshStandardMaterial({color:0xD4AF37, metalness:0.9, roughness:0.25}));
+      cap.position.set(b.position.x, h+0.2, b.position.z);
+      scene.add(cap);
+    });
+  }
+
+  // ---- trees: jacaranda purple, flame-tree orange, and plain green, for a colorful streetscape ----
+  const CANOPY_COLORS = [0x1f4d38, 0x1f4d38, 0x8a5fc4, 0xe0703a, 0x1f4d38];
+  function tree(x,z,canopyColor){
+    const g = new THREE.Group();
+    const trunk = box(0.7,3,0.7,0x4a3a26); trunk.position.y=1.5;
+    const c = canopyColor !== undefined ? canopyColor : CANOPY_COLORS[Math.floor(Math.random()*CANOPY_COLORS.length)];
+    const canopy = new THREE.Mesh(new THREE.SphereGeometry(2.1,8,8), new THREE.MeshLambertMaterial({color:c}));
+    canopy.position.y = 4.2;
+    g.add(trunk, canopy);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  for(let z = 40; z < END_Z; z += 30){
+    const onJunction = STREETS.some(st => Math.abs(st.z - z) < 18);
+    if(onJunction) continue;
+    if(Math.random()<0.55) tree(MAIN_HALF+3.5, z + Math.random()*8);
+    if(Math.random()<0.55) tree(-(MAIN_HALF+3.5), z + Math.random()*8);
+  }
+  // trees lining every side street, all the way out to the loop road
+  STREETS.forEach(st=>{
+    for(let d = MAIN_HALF+18; d < STREET_LOOP_LEN-20; d += 34){
+      const wx = st.side*d;
+      if(Math.random()<0.6) tree(wx, st.z + 6.5 + Math.random()*3);
+      if(Math.random()<0.6) tree(wx, st.z - 6.5 - Math.random()*3);
+    }
+  });
+
+  // ---- billboards with quotes along the avenue ----
+  const QUOTES = [
+    "Growth is built one line of code at a time.",
+    "Every stop on this road taught something new.",
+    "Consistency turns experience into expertise.",
+    "Curiosity is the best first commit.",
+    "Small steps in Nairobi, ideas that travel the world.",
+    "The best CV is the one you keep building."
+  ];
+  function addBillboard(x, z, text, rotY, big){
+    const scale = big ? 1.7 : 1;
+    const g = new THREE.Group();
+    const poleMat = new THREE.MeshStandardMaterial({ color:0x2c2c30, metalness:0.4, roughness:0.5 });
+    const poleH = 9*scale;
+    const poleL = new THREE.Mesh(new THREE.CylinderGeometry(0.25*scale,0.25*scale,poleH,8), poleMat); poleL.position.set(-3.2*scale,poleH/2,0);
+    const poleR = new THREE.Mesh(new THREE.CylinderGeometry(0.25*scale,0.25*scale,poleH,8), poleMat); poleR.position.set(3.2*scale,poleH/2,0);
+    g.add(poleL, poleR);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 700; canvas.height = 340;
+    const grad = ctx.createLinearGradient(0,0,0,340);
+    grad.addColorStop(0,'#141a2e'); grad.addColorStop(1,'#0a0e1c');
+    ctx.fillStyle = grad;
+    roundRect(ctx,6,6,canvas.width-12,canvas.height-12,20); ctx.fill();
+    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 6;
+    roundRect(ctx,6,6,canvas.width-12,canvas.height-12,20); ctx.stroke();
+    ctx.fillStyle = '#D4AF37'; ctx.font = '700 64px Baloo 2, Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('“', canvas.width/2, 78);
+    ctx.fillStyle = '#F3ECDA'; ctx.font = '700 34px Baloo 2, Inter, sans-serif';
+    wrapText(ctx, text, canvas.width/2, 148, canvas.width-110, 44, 4);
+    ctx.fillStyle = '#9AA4BC'; ctx.font = '600 20px Inter, sans-serif';
+    ctx.fillText('— MALOMBA CITY', canvas.width/2, canvas.height-28);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, side:THREE.DoubleSide });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(7*scale,3.4*scale), mat);
+    panel.position.set(0, poleH*0.8, 0);
+    g.add(panel);
+    if(big){
+      tree(x-6, z-3); tree(x+6, z-3); tree(x-5, z+4); tree(x+5, z+4);
+    }
+    g.position.set(x, 0, z);
+    if(rotY) g.rotation.y = rotY;
+    scene.add(g);
+  }
+  const BILLBOARD_X = MAIN_HALF + 15;
+  addBillboard(BILLBOARD_X, 260, QUOTES[0], -Math.PI/2, true);
+  addBillboard(-BILLBOARD_X, 760, QUOTES[1], Math.PI/2, true);
+  addBillboard(BILLBOARD_X, 1240, QUOTES[2], -Math.PI/2, true);
+  addBillboard(-BILLBOARD_X, 1720, QUOTES[3], Math.PI/2, true);
+  addBillboard(BILLBOARD_X, 2200, QUOTES[4], -Math.PI/2, true);
+  addBillboard(-BILLBOARD_X, 2600, QUOTES[5], Math.PI/2, true);
+  // a second, deeper row tucked further back among the trees on the open land
+  const BILLBOARD_X2 = MAIN_HALF + 48;
+  addBillboard(BILLBOARD_X2, 480, QUOTES[2], -Math.PI/2, true);
+  addBillboard(-BILLBOARD_X2, 980, QUOTES[4], Math.PI/2, true);
+  addBillboard(BILLBOARD_X2, 1620, QUOTES[1], -Math.PI/2, true);
+  addBillboard(-BILLBOARD_X2, 2320, QUOTES[0], Math.PI/2, true);
+
+  // ---- Silicon-Valley-style campus life scattered across the open land ----
+  const TECH_NAMES = ['Nexora Labs','Orbital Systems','Vertex AI','Quanta Works','Helix Robotics','Zenith Cloud'];
+  function addTechCampus(x, z, name, idx){
+    const g = new THREE.Group();
+    const accentPalette = [0x6fe3d8,0xff9bd0,0xc6f135,0x9bc4ff,0xffd39b,0xd99bff];
+    const accent = accentPalette[idx % accentPalette.length];
+    const h = 9 + (idx%3)*3;
+    const glassTex = makeGlassTexture('#101a2c', '#'+accent.toString(16).padStart(6,'0'));
+    glassTex.repeat.set(2, Math.max(2, Math.round(h/4)));
+    const mat = new THREE.MeshPhongMaterial({ map:glassTex, color:accent, specular:0xffffff, shininess:70 });
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(8,h,6), mat);
+    tower.position.y = h/2; g.add(tower);
+    const signPlaque = makePlaqueSprite(name, 'Tech Campus');
+    signPlaque.position.set(0, 2.4, 3.6);
+    g.add(signPlaque);
+    const lawn = new THREE.Mesh(new THREE.CircleGeometry(7,20), new THREE.MeshLambertMaterial({color:0x2c5c3f}));
+    lawn.rotation.x = -Math.PI/2; lawn.position.set(0,0.02,5.5);
+    g.add(lawn);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  const ROBOTS = [];
+  function addRobot(x,z){
+    const g = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color:0xE6EAF0, metalness:0.6, roughness:0.3 });
+    const accentMat = new THREE.MeshBasicMaterial({ color:0x6fe3d8 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.7), bodyMat); body.position.y=1.0;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.5,0.55), bodyMat); head.position.y=1.85;
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8), accentMat); eyeL.position.set(-0.15,1.87,0.3);
+    const eyeR = eyeL.clone(); eyeR.position.x = 0.15;
+    const armGeo = new THREE.CylinderGeometry(0.09,0.09,0.9,8);
+    const armL = new THREE.Mesh(armGeo, bodyMat); armL.position.set(-0.62,1.05,0); armL.rotation.z = 0.15;
+    const armR = new THREE.Mesh(armGeo, bodyMat); armR.position.set(0.62,1.05,0); armR.rotation.z = -0.15;
+    const legGeo = new THREE.CylinderGeometry(0.12,0.12,0.7,8);
+    const legL = new THREE.Mesh(legGeo, bodyMat); legL.position.set(-0.25,0.35,0);
+    const legR = new THREE.Mesh(legGeo, bodyMat); legR.position.set(0.25,0.35,0);
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.35,6), bodyMat); antenna.position.set(0,2.28,0);
+    const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), accentMat); antTip.position.set(0,2.47,0);
+    g.add(body,head,eyeL,eyeR,armL,armR,legL,legR,antenna,antTip);
+    g.position.set(x,0,z);
+    g.rotation.y = Math.random()*Math.PI*2;
+    scene.add(g);
+    // walks a slow lazy loop around its spawn point, instead of standing still
+    ROBOTS.push({ mesh:g, homeX:x, homeZ:z, phase:Math.random()*Math.PI*2, speed:0.35+Math.random()*0.35, radius:2+Math.random()*2.5 });
+    return g;
+  }
+  function addParkPlot(x,z){
+    const lawn = new THREE.Mesh(new THREE.CircleGeometry(9,20), new THREE.MeshLambertMaterial({color:0x2c5c3f}));
+    lawn.rotation.x = -Math.PI/2; lawn.position.set(x,0.02,z);
+    scene.add(lawn);
+    for(let i=0;i<5;i++){
+      const ang = (i/5)*Math.PI*2 + Math.random();
+      const r = 3+Math.random()*4;
+      tree(x+Math.cos(ang)*r, z+Math.sin(ang)*r);
+    }
+    const bench = box(1.6,0.4,0.5,0x5a4632); bench.position.set(x,0.2,z-2); scene.add(bench);
+  }
+  function addForestPlot(x,z){
+    for(let i=0;i<12;i++){
+      const ang = Math.random()*Math.PI*2;
+      const r = Math.random()*11;
+      tree(x+Math.cos(ang)*r, z+Math.sin(ang)*r);
+    }
+  }
+
+  // ---- civic & places of worship, dotted through the open land like any real city ----
+  function addPoliceStation(x,z){
+    const g = new THREE.Group();
+    const body = box(7,4,6,0x27364a); g.add(body);
+    const trim = box(7.2,0.3,6.2,0xC9D6DF); trim.position.y=4.15; g.add(trim);
+    const barMat1 = new THREE.MeshBasicMaterial({color:0x3a7bd5});
+    const barMat2 = new THREE.MeshBasicMaterial({color:0xd53a3a});
+    const bar1 = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.3,0.5), barMat1); bar1.position.set(-0.5,4.5,0);
+    const bar2 = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.3,0.5), barMat2); bar2.position.set(0.5,4.5,0);
+    g.add(bar1,bar2);
+    const sign = makePlaqueSprite('Police Station', 'Malomba City Police');
+    sign.position.set(0,2.2,3.4); g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addChurch(x,z){
+    const g = new THREE.Group();
+    const body = box(6,5,9,0xEDE7DA); g.add(body);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(5.1,3,4), new THREE.MeshStandardMaterial({color:0x6b4a2b,roughness:0.6}));
+    roof.rotation.y = Math.PI/4; roof.position.y = 6.5; g.add(roof);
+    const steeple = box(1.4,4,1.4,0xEDE7DA); steeple.position.set(0,7,4.2); g.add(steeple);
+    const crossV = box(0.18,1.4,0.18,0xD4AF37); crossV.position.set(0,9.9,4.2);
+    const crossH = box(0.7,0.18,0.18,0xD4AF37); crossH.position.set(0,9.5,4.2);
+    g.add(crossV,crossH);
+    const sign = makePlaqueSprite('Malomba Community Church', 'Open for all');
+    sign.position.set(0,2.2,4.8); g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addMosque(x,z){
+    const g = new THREE.Group();
+    const body = box(7,4,7,0xF2EEE2); g.add(body);
+    const domeMat = new THREE.MeshStandardMaterial({color:0x1f6e5c, metalness:0.6, roughness:0.3});
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 12, 0, Math.PI*2, 0, Math.PI/2), domeMat);
+    dome.position.y = 4; g.add(dome);
+    const domeTip = new THREE.Mesh(new THREE.SphereGeometry(0.25,8,8), new THREE.MeshStandardMaterial({color:0xD4AF37,metalness:0.9}));
+    domeTip.position.y = 7; g.add(domeTip);
+    const minaret = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,8,10), new THREE.MeshStandardMaterial({color:0xF2EEE2}));
+    minaret.position.set(4.5,4,-4.5); g.add(minaret);
+    const minaretCap = new THREE.Mesh(new THREE.ConeGeometry(0.7,1.4,10), domeMat);
+    minaretCap.position.set(4.5,8.7,-4.5); g.add(minaretCap);
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.18,8,8), new THREE.MeshStandardMaterial({color:0xD4AF37,metalness:0.9}));
+    finial.position.set(4.5,9.6,-4.5); g.add(finial);
+    const sign = makePlaqueSprite('Malomba Jamia Mosque', 'All are welcome');
+    sign.position.set(0,2.2,3.8); g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addSynagogue(x,z){
+    const g = new THREE.Group();
+    const body = box(6.5,4.2,6.5,0xEDE4D3); g.add(body);
+    const domeMat = new THREE.MeshStandardMaterial({color:0x2a5f8a, metalness:0.55, roughness:0.3});
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12, 0, Math.PI*2, 0, Math.PI/2), domeMat);
+    dome.position.y = 4.2; g.add(dome);
+    const starMat = new THREE.MeshStandardMaterial({ color:0xD4AF37, metalness:0.85, roughness:0.25, side:THREE.DoubleSide });
+    const triGeo = new THREE.ConeGeometry(1.1, 0.06, 3);
+    const t1 = new THREE.Mesh(triGeo, starMat); t1.rotation.x = Math.PI/2;
+    const t2 = new THREE.Mesh(triGeo, starMat); t2.rotation.x = Math.PI/2; t2.rotation.z = Math.PI;
+    const star = new THREE.Group(); star.add(t1,t2);
+    star.position.set(0, 2.4, 3.3);
+    g.add(star);
+    const sign = makePlaqueSprite('Malomba Synagogue', 'Shalom');
+    sign.position.set(0,1.1,3.6); g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+
+  // ---- landmark venues: stadiums, university, arena — so the city never feels empty ----
+  function addStadium(x,z,name,scale){
+    scale = scale || 1;
+    const g = new THREE.Group();
+    const field = new THREE.Mesh(new THREE.CircleGeometry(16*scale,24), new THREE.MeshLambertMaterial({color:0x2c8a4f}));
+    field.rotation.x = -Math.PI/2; field.position.y = 0.05; g.add(field);
+    const track = new THREE.Mesh(new THREE.RingGeometry(16*scale,18*scale,24), new THREE.MeshLambertMaterial({color:0x8a5a2b, side:THREE.DoubleSide}));
+    track.rotation.x = -Math.PI/2; track.position.y = 0.06; g.add(track);
+    const standMat = new THREE.MeshStandardMaterial({ color:0x2c3346, metalness:0.3, roughness:0.6 });
+    const segs = 16;
+    for(let i=0;i<segs;i++){
+      const ang = (i/segs)*Math.PI*2;
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(4.2*scale,3*scale,3*scale), standMat);
+      seg.position.set(Math.cos(ang)*20*scale, 1.5*scale, Math.sin(ang)*20*scale);
+      seg.rotation.y = -ang;
+      g.add(seg);
+    }
+    for(let i=0;i<4;i++){
+      const ang = (i/4)*Math.PI*2 + Math.PI/4;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,14*scale,8), new THREE.MeshStandardMaterial({color:0x2c2c30}));
+      pole.position.set(Math.cos(ang)*22*scale, 7*scale, Math.sin(ang)*22*scale);
+      g.add(pole);
+      const lightBox = new THREE.Mesh(new THREE.BoxGeometry(2,1,0.3), new THREE.MeshBasicMaterial({color:0xFFF6D8}));
+      lightBox.position.set(Math.cos(ang)*22*scale, 14*scale, Math.sin(ang)*22*scale);
+      g.add(lightBox);
+    }
+    const sign = makePlaqueSprite(name, 'Stadium');
+    sign.scale.set(11,4.4,1);
+    sign.position.set(0, 9*scale, 21*scale);
+    g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addUniversity(x,z,name){
+    const g = new THREE.Group();
+    const lawn = new THREE.Mesh(new THREE.PlaneGeometry(30,20), new THREE.MeshLambertMaterial({color:0x2c5c3f}));
+    lawn.rotation.x = -Math.PI/2; lawn.position.y = 0.02; g.add(lawn);
+    const stoneMat = new THREE.MeshStandardMaterial({ color:0xEDE7DA, roughness:0.6 });
+    const mainHall = new THREE.Mesh(new THREE.BoxGeometry(14,7,6), stoneMat); mainHall.position.set(0,3.5,-6); g.add(mainHall);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(2.4,14,10,0,Math.PI*2,0,Math.PI/2), new THREE.MeshStandardMaterial({color:0xD4AF37,metalness:0.8,roughness:0.25}));
+    dome.position.set(0,7,-6); g.add(dome);
+    const wingA = new THREE.Mesh(new THREE.BoxGeometry(6,5,5), stoneMat); wingA.position.set(-9,2.5,-3); g.add(wingA);
+    const wingB = wingA.clone(); wingB.position.x = 9; g.add(wingB);
+    const sign = makePlaqueSprite(name, 'Est. in Malomba City');
+    sign.scale.set(11,4.4,1);
+    sign.position.set(0,3,5);
+    g.add(sign);
+    for(let i=0;i<6;i++) tree(-12+i*4.8, 8+Math.random()*3);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addArena(x,z,name){
+    const g = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(10,10,6,20), new THREE.MeshStandardMaterial({color:0x1b2a45, metalness:0.4, roughness:0.5}));
+    base.position.y = 3; g.add(base);
+    const roof = new THREE.Mesh(new THREE.SphereGeometry(10,20,14,0,Math.PI*2,0,Math.PI/2.4), new THREE.MeshStandardMaterial({color:0xC9D6DF, metalness:0.6, roughness:0.3}));
+    roof.position.y = 6; g.add(roof);
+    const sign = makePlaqueSprite(name, 'Arena');
+    sign.scale.set(9,3.6,1);
+    sign.position.set(0,3,11);
+    g.add(sign);
+    g.position.set(x,0,z);
+    scene.add(g);
+  }
+  function addFightPoster(x,z,rotY){
+    const g = new THREE.Group();
+    const poleMat = new THREE.MeshStandardMaterial({color:0x2c2c30});
+    const poleL = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,10,8), poleMat); poleL.position.set(-3.8,5,0);
+    const poleR = poleL.clone(); poleR.position.x = 3.8;
+    g.add(poleL,poleR);
+    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+    canvas.width = 760; canvas.height = 380;
+    const grad = ctx.createLinearGradient(0,0,0,380); grad.addColorStop(0,'#3a0d0d'); grad.addColorStop(1,'#0d0a0a');
+    ctx.fillStyle = grad; roundRect(ctx,6,6,canvas.width-12,canvas.height-12,20); ctx.fill();
+    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 8; roundRect(ctx,6,6,canvas.width-12,canvas.height-12,20); ctx.stroke();
+    ctx.fillStyle = '#D4AF37'; ctx.textAlign = 'center'; ctx.font = '800 34px Baloo 2, Inter, sans-serif';
+    ctx.fillText('MALOMBA CITY BOXING NIGHT', canvas.width/2, 58);
+    ctx.fillStyle = '#F3ECDA'; ctx.font = '800 56px Baloo 2, Inter, sans-serif';
+    ctx.fillText('2 TAM', canvas.width/2-160, 190);
+    ctx.fillStyle = '#D4AF37'; ctx.font = '800 44px Baloo 2, Inter, sans-serif';
+    ctx.fillText('VS', canvas.width/2, 190);
+    ctx.fillStyle = '#F3ECDA'; ctx.font = '800 56px Baloo 2, Inter, sans-serif';
+    ctx.fillText('1 TERM', canvas.width/2+165, 190);
+    ctx.fillStyle = '#9AA4BC'; ctx.font = '600 24px Inter, sans-serif';
+    ctx.fillText('Championship Bout · KWM Arena', canvas.width/2, 260);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, side:THREE.DoubleSide });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(9,4.5), mat);
+    panel.position.set(0,7.6,0);
+    g.add(panel);
+    g.position.set(x,0,z);
+    if(rotY) g.rotation.y = rotY;
+    scene.add(g);
+  }
+  addStadium(MAIN_HALF+95, 680, 'Malomba Stadium', 1);
+  addUniversity(-(MAIN_HALF+120), 1240, 'Malomba University');
+  addArena(MAIN_HALF+85, 1720, 'KWM Arena');
+  addStadium(-(MAIN_HALF+100), 2200, 'Emirates Stadium', 0.9);
+  addFightPoster(MAIN_HALF+40, 1790, -Math.PI/2);
+
+  function fillPlot(x,z){
+    const roll = Math.random();
+    if(roll < 0.24){
+      addTechCampus(x, z, TECH_NAMES[Math.floor(Math.random()*TECH_NAMES.length)], Math.floor(Math.random()*6));
+      if(Math.random()<0.7) addRobot(x + (Math.random()<0.5?-9:9), z + (Math.random()*6-3));
+    } else if(roll < 0.46){
+      addParkPlot(x, z);
+      if(Math.random()<0.5) addRobot(x, z+3);
+    } else if(roll < 0.64){
+      addForestPlot(x, z);
+      if(Math.random()<0.35) addRobot(x + (Math.random()*10-5), z + (Math.random()*10-5));
+    } else if(roll < 0.74){
+      addPoliceStation(x, z);
+    } else if(roll < 0.84){
+      addChurch(x, z);
+    } else if(roll < 0.92){
+      addMosque(x, z);
+    } else {
+      addSynagogue(x, z);
+    }
+    // extra wandering robots, independent of what just got built — keeps even quiet plots from feeling deserted
+    if(Math.random()<0.3) addRobot(x + (Math.random()*14-7), z + (Math.random()*14-7));
+  }
+  for(let z = START_Z+80; z < END_Z-40; z += 85){
+    const nearStreet = STREETS.some(st => Math.abs(st.z - z) < 38);
+    if(nearStreet) continue;
+    [1,-1].forEach(side=>{
+      // two plots per row, near and far, so the land between avenue and ring boulevard fills up completely
+      if(Math.random()>=0.02){
+        const xNear = side*(MAIN_HALF + 45 + Math.random()*160);
+        fillPlot(xNear, z + (Math.random()*20-10));
+      }
+      if(Math.random()>=0.05){
+        const xFar = side*(MAIN_HALF + 220 + Math.random()*(STREET_LOOP_LEN-320));
+        fillPlot(xFar, z + (Math.random()*20-10));
+      }
+    });
+  }
+
+  // ---- glass texture for tower facades: a grid of lit windows ----
+  function makeGlassTexture(base, glow){
+    const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = base; ctx.fillRect(0,0,64,128);
+    ctx.fillStyle = glow;
+    for(let y=6;y<128;y+=13){
+      for(let x=5;x<64;x+=13){
+        if(Math.random() < 0.6) ctx.fillRect(x,y,7,8);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  // ---- elegant ground-level location plaque (naming lives outside the building, like a landmark pin) ----
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines){
+    const words = text.split(' ');
+    let line = '', yy = y, lines = 0;
+    for(let n=0;n<words.length;n++){
+      const test = line + words[n] + ' ';
+      if(ctx.measureText(test).width > maxWidth && n>0){
+        ctx.fillText(line, x, yy);
+        line = words[n]+' '; yy += lineHeight; lines++;
+        if(lines >= maxLines-1){ break; }
+      } else line = test;
+    }
+    ctx.fillText(line, x, yy);
+  }
+  function makePlaqueSprite(title, subtitle, tag){
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 640; canvas.height = 260;
+    ctx.fillStyle = 'rgba(8,12,22,0.9)';
+    roundRect(ctx, 8,8, canvas.width-16, canvas.height-16, 18); ctx.fill();
+    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 4;
+    roundRect(ctx, 8,8, canvas.width-16, canvas.height-16, 18); ctx.stroke();
+    let y = 56;
+    if(tag){
+      ctx.fillStyle = '#D4AF37'; ctx.textAlign='center';
+      ctx.font = '800 20px Inter, sans-serif';
+      ctx.fillText(tag.toUpperCase(), canvas.width/2, 40);
+      y = 74;
+    }
+    ctx.fillStyle = '#F3ECDA'; ctx.textAlign='center';
+    const fs = title.length > 30 ? 26 : title.length > 20 ? 30 : 36;
+    ctx.font = '800 '+fs+'px Baloo 2, Inter, sans-serif';
+    ctx.fillText('📍 '+title, canvas.width/2, y+16);
+    if(subtitle){
+      ctx.fillStyle = '#B9C3D6'; ctx.font = '600 21px Inter, sans-serif';
+      wrapText(ctx, subtitle, canvas.width/2, y+62, canvas.width-70, 27, 3);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({ map:tex, transparent:true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(9.6, 3.9, 1);
+    return sprite;
+  }
+
+  // ---- buildings for resume items: sleek glass towers with a gold crown ----
+  const TRIGGERS = []; // {x,z,radius,kind,data}
+  const beacons = [];
+  const PALETTES = {
+    corporate: ['#0c1830','#0b2438','#0d2f28','#1a1f3d'],
+    creative:  ['#1c0f2e','#2b0f24','#0f1f30','#1f0f0f'],
+    grand:     ['#210d1a','#1a0d21','#0d1a21','#211a0d'],
+  };
+  const ACCENTS = {
+    corporate: [0x8fd7ff, 0x7fe7c9, 0x9bc4ff, 0xc9a9ff],
+    creative:  [0xd99bff, 0xff9bd0, 0x9bffea, 0xffd39b],
+    grand:     [0xf2c88f, 0xff9bbd, 0x9bd0ff, 0xc8ff9b],
+  };
+  function addBuilding(worldX, worldZ, style, height, item, streetName, idx){
+    const g = new THREE.Group();
+    const h = height || 12;
+    const gold = 0xD4AF37;
+    idx = idx || 0;
+
+    if(style === 'creative'){
+      // Projects Avenue — faceted, vibrant glass studios with a rooftop dish, for a tech/creative feel
+      const base = PALETTES.creative[idx % PALETTES.creative.length];
+      const accent = item.current ? 0xFFD98A : ACCENTS.creative[idx % ACCENTS.creative.length];
+      const glassTex = makeGlassTexture(base, item.current ? '#FFD98A' : '#'+accent.toString(16).padStart(6,'0'));
+      glassTex.repeat.set(2, Math.max(2, Math.round(h/4)));
+      const glassMat = new THREE.MeshPhongMaterial({ map:glassTex, color:item.current?0x4a2a66:accent, specular:0xffffff, shininess:85 });
+      const tower = new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.6,h*0.8,8), glassMat);
+      tower.position.y = h*0.4; tower.rotation.y = Math.PI/8;
+      g.add(tower);
+      const ringMat = new THREE.MeshStandardMaterial({ color:item.current?0xFFD98A:accent, metalness:0.7, roughness:0.3 });
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(2.4,0.28,8,24), ringMat);
+      ring.position.y = h*0.86; ring.rotation.x = Math.PI/2;
+      g.add(ring);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,h*0.16,6), new THREE.MeshStandardMaterial({color:gold, metalness:1, roughness:0.2}));
+      mast.position.y = h*0.86 + h*0.08;
+      g.add(mast);
+      if(item.current){
+        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,8), new THREE.MeshBasicMaterial({color:0xFFD98A}));
+        beacon.position.y = h*0.86 + h*0.16 + 0.3; g.add(beacon); beacons.push(beacon);
+      }
+    } else if(style === 'academic'){
+      // Education Road — warm stone with a gilded (or copper / silver) dome, like a stately campus hall
+      const trimPalette = [0xD4AF37, 0xC97A4A, 0xC9D6DF, 0xD4AF37];
+      const stonePalette = [0xEDE7DA, 0xE6DCC6, 0xE2E4E8, 0xEFE2D0];
+      const trimColor = trimPalette[idx % trimPalette.length];
+      const stoneMat = new THREE.MeshStandardMaterial({ color:stonePalette[idx % stonePalette.length], roughness:0.6, metalness:0.06 });
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(6.4, h*0.7, 6.4), stoneMat);
+      tower.position.y = h*0.35; g.add(tower);
+      const trimMat = new THREE.MeshStandardMaterial({ color:trimColor, metalness:0.85, roughness:0.25 });
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(6.8,0.3,6.8), trimMat);
+      trim.position.y = h*0.7 + 0.15; g.add(trim);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12, 0, Math.PI*2, 0, Math.PI/2), trimMat);
+      dome.position.y = h*0.7 + 0.3; g.add(dome);
+      for(let i=-2.4;i<=2.4;i+=2.4){
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,h*0.62,10), stoneMat);
+        col.position.set(i, h*0.32, 3.5); g.add(col);
+      }
+    } else if(style === 'grand'){
+      // References Way — deep jewel-toned glass tower with a gold halo crown, an opulent, trustworthy landmark
+      const base = PALETTES.grand[idx % PALETTES.grand.length];
+      const accent = ACCENTS.grand[idx % ACCENTS.grand.length];
+      const glassTex = makeGlassTexture(base, '#'+accent.toString(16).padStart(6,'0'));
+      glassTex.repeat.set(2, Math.max(2, Math.round(h/4)));
+      const glassMat = new THREE.MeshPhongMaterial({ map:glassTex, color:accent, specular:0xf2c88f, shininess:85 });
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(6.4, h*0.8, 6.4), glassMat);
+      tower.position.y = h*0.4; g.add(tower);
+      const bandMat = new THREE.MeshStandardMaterial({ color:gold, metalness:0.9, roughness:0.2 });
+      const band = new THREE.Mesh(new THREE.BoxGeometry(6.7,0.4,6.7), bandMat);
+      band.position.y = h*0.5; g.add(band);
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(3,3.6,h*0.14,10), bandMat);
+      crown.position.y = h*0.8 + (h*0.14)/2; g.add(crown);
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(2.2,0.22,8,24), bandMat);
+      halo.position.y = h*0.94 + 0.6; halo.rotation.x = Math.PI/2; g.add(halo);
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.4,h*0.1,8), bandMat);
+      spire.position.y = h*0.94 + 0.6 + h*0.05; g.add(spire);
+    } else {
+      // corporate (Experience Street, default) — glass towers, hue cycling by hue so the skyline reads as colorful, not monotone
+      const base = PALETTES.corporate[idx % PALETTES.corporate.length];
+      const accent = item.current ? 0xFFD98A : ACCENTS.corporate[idx % ACCENTS.corporate.length];
+      const glassTex = makeGlassTexture(base, item.current ? '#FFD98A' : '#'+accent.toString(16).padStart(6,'0'));
+      glassTex.repeat.set(2, Math.max(2, Math.round(h/4)));
+      const glassMat = new THREE.MeshPhongMaterial({ map:glassTex, color:item.current?0x24365e:accent, specular:0xffffff, shininess:75 });
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(6, h*0.78, 6), glassMat);
+      tower.position.y = h*0.39; g.add(tower);
+      const crownMat = new THREE.MeshStandardMaterial({ color:item.current?0xFFD98A:0xC9D6DF, metalness:0.85, roughness:0.25 });
+      const crown = new THREE.Mesh(new THREE.BoxGeometry(4.2, h*0.16, 4.2), crownMat);
+      crown.position.y = h*0.78 + (h*0.16)/2; g.add(crown);
+      const spireMat = new THREE.MeshStandardMaterial({ color:gold, metalness:1, roughness:0.2 });
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.5, h*0.14, 8), spireMat);
+      spire.position.y = h*0.94 + (h*0.14)/2; g.add(spire);
+      if(item.current){
+        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,8), new THREE.MeshBasicMaterial({color:0xFFD98A}));
+        beacon.position.y = h + 0.6; g.add(beacon); beacons.push(beacon);
+      }
+    }
+
+    // a Nairobi skyline signature: rooftop water tank + antenna cluster on every tower but the academic/embassy ones
+    if(style !== 'academic'){
+      const tankMat = new THREE.MeshStandardMaterial({ color:0x8a8f9c, metalness:0.5, roughness:0.5 });
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,1.2,10), tankMat);
+      tank.position.set(1.8, h+0.6, -1.6);
+      g.add(tank);
+      const mastMat = new THREE.MeshStandardMaterial({ color:0xC9D6DF, metalness:0.7, roughness:0.35 });
+      for(let i=0;i<2;i++){
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.4-i*0.6,6), mastMat);
+        mast.position.set(-1.6+i*0.9, h+1.2-i*0.3, 1.5);
+        g.add(mast);
+      }
+    }
+
+    // ground-level location plaque — the naming lives outside the tower, like a landmark placard
+    const sub = [item.subtitle, item.meta].filter(Boolean).join(' · ');
+    const plaque = makePlaqueSprite(item.title, sub, item.tag);
+    plaque.position.set(0, 2.7, 4.6);
+    g.add(plaque);
+    // reflective forecourt in place of a plain parking patch
+    const lot = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 4.5), new THREE.MeshStandardMaterial({color:0x1c2333, metalness:0.5, roughness:0.4}));
+    lot.rotation.x = -Math.PI/2;
+    lot.position.set(0, 0.03, 4.6);
+    g.add(lot);
+    g.position.set(worldX, 0, worldZ);
+    scene.add(g);
+    TRIGGERS.push({ x:worldX, z:worldZ, radius:11, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
+  }
+
+  // ---- an embassy building, for the one resume stop that happens outside Kenya ----
+  function addEmbassy(worldX, worldZ, item, streetName){
+    const g = new THREE.Group();
+    const marble = new THREE.MeshStandardMaterial({ color:0xEDE7DA, roughness:0.55, metalness:0.08 });
+    const gold = new THREE.MeshStandardMaterial({ color:0xD4AF37, metalness:0.9, roughness:0.22 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(9,6,7), marble);
+    base.position.y = 3; g.add(base);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(6.6, 2.4, 3), marble);
+    roof.rotation.y = Math.PI/2;
+    roof.position.set(0, 7.2, 0);
+    g.add(roof);
+    for(let i=-3.2; i<=3.2; i+=2.15){
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,5.6,10), marble);
+      col.position.set(i, 2.9, 3.7);
+      g.add(col);
+    }
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(9.4,0.3,7.4), gold);
+    trim.position.y = 6.05; g.add(trim);
+    const pole = box(0.12,5,0.12,0xd9d9d9); pole.position.set(4.4,6,-2.2); g.add(pole);
+    const flag = makeLabelSprite((item.embassyFlag||'🏳️')+' '+item.embassy.toUpperCase(), { bg:'#0B4F8A', color:'#fff', border:'#0B4F8A', fontSize:28 });
+    flag.scale.set(4.4, 1.5, 1);
+    flag.position.set(4.4, 8.8, -2.2);
+    g.add(flag);
+    const plaque = makePlaqueSprite('Embassy of '+item.embassy, item.title + (item.meta ? ' · '+item.meta : ''), 'OUTSIDE KENYA');
+    plaque.position.set(0, 2.8, 4.4);
+    g.add(plaque);
+    const lot = new THREE.Mesh(new THREE.PlaneGeometry(8,4.5), new THREE.MeshStandardMaterial({color:0x1c2333, metalness:0.5, roughness:0.4}));
+    lot.rotation.x = -Math.PI/2; lot.position.set(0,0.03,4.8);
+    g.add(lot);
+    g.position.set(worldX, 0, worldZ);
+    scene.add(g);
+    TRIGGERS.push({ x:worldX, z:worldZ, radius:12, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
+  }
+
+  STREETS.forEach(st=>{
+    const label = makeSignSprite([st.name, st.items.length+' stop'+(st.items.length>1?'s':'')]);
+    label.position.set(st.side*(MAIN_HALF+3), 6.4, st.z - 6);
+    scene.add(label);
+
+    // guide character at the junction, pointing down the street
+    addGuide(st);
+
+    st.items.forEach((it, idx)=>{
+      const zOff = (idx % 2 === 0) ? 4.6 : -4.6;
+      const wx = st.side * (MAIN_HALF + it.d);
+      const wz = st.z + zOff;
+      const h = it.current ? 22 : (12 + (idx%3)*3.2);
+      if(it.embassy) addEmbassy(wx, wz, it, st.name);
+      else addBuilding(wx, wz, st.style, h, it, st.name, idx);
+    });
+
+    TRIGGERS.push({ x: st.side*(MAIN_HALF+2), z: st.z, radius:9, kind:'street', data:st });
+  });
+
+  TRIGGERS.push({ x:0, z:START_Z, radius:16, kind:'item', data:Object.assign({}, START_INFO, {zone:'Malomba Avenue'}) });
+  TRIGGERS.push({ x:0, z:END_Z, radius:16, kind:'item', data:Object.assign({}, END_INFO, {zone:'City Limits'}) });
+
+  // ---- International Park: a small plaza celebrating Kevin's global outlook ----
+  function addInternationalPark(px, pz){
+    const g = new THREE.Group();
+    const marble = new THREE.MeshStandardMaterial({ color:0xEDE7DA, roughness:0.5, metalness:0.08 });
+    const plazaFloor = new THREE.Mesh(new THREE.CircleGeometry(9,32), marble);
+    plazaFloor.rotation.x = -Math.PI/2; plazaFloor.position.y = 0.02;
+    g.add(plazaFloor);
+    const fountainBase = new THREE.Mesh(new THREE.CylinderGeometry(3,3,0.6,24), marble);
+    fountainBase.position.y = 0.3; g.add(fountainBase);
+    const water = new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,0.15,24), new THREE.MeshStandardMaterial({color:0x2a5f7a, metalness:0.7, roughness:0.08}));
+    water.position.y = 0.62; g.add(water);
+    const spire = new THREE.Mesh(new THREE.ConeGeometry(0.4,1.7,10), new THREE.MeshStandardMaterial({color:0xD4AF37, metalness:0.9, roughness:0.2}));
+    spire.position.y = 1.45; g.add(spire);
+    const flagColors = [0xE6483C,0x0B4F8A,0x2E8B57,0xD4AF37,0x7A1F41,0xC1501F,0x5B1E7A,0xC9D6DF];
+    flagColors.forEach((col,i)=>{
+      const ang = (i/flagColors.length)*Math.PI*2;
+      const px2 = Math.cos(ang)*6.6, pz2 = Math.sin(ang)*6.6;
+      const pole = box(0.1,3.4,0.1,0xd9d9d9); pole.position.set(px2,0,pz2); g.add(pole);
+      const fl = box(1,0.7,0.05,col); fl.position.set(px2+0.5,3,pz2); g.add(fl);
+    });
+    for(let i=0;i<4;i++){
+      const ang = (i/4)*Math.PI*2 + 0.4;
+      const bx = Math.cos(ang)*4.4, bz = Math.sin(ang)*4.4;
+      const bench = box(1.6,0.42,0.5,0x5a4632); bench.position.set(bx,0.21,bz); g.add(bench);
+    }
+    tree(px+6.5,pz+6.5); tree(px-6.5,pz+6.5); tree(px+6.5,pz-6.5); tree(px-6.5,pz-6.5);
+    const plaque = makePlaqueSprite('International Park', "Kevin's global outlook — one flag per journey");
+    plaque.position.set(0, 5.4, 0);
+    g.add(plaque);
+    g.position.set(px, 0, pz);
+    scene.add(g);
+  }
+  addInternationalPark(-46, (STREETS[3].z + STREETS[4].z)/2);
+
+  // start/end gateway arches
+  function gateway(z, color, text){
+    const g = new THREE.Group();
+    const postL = box(0.6,7,0.6,0x2c2c30); postL.position.set(-MAIN_HALF,0,0);
+    const postR = box(0.6,7,0.6,0x2c2c30); postR.position.set(MAIN_HALF,0,0);
+    const beam = box(MAIN_HALF*2+1.2,1.2,0.6,color); beam.position.set(0,7,0);
+    g.add(postL,postR,beam);
+    const sign = makeSignSprite([text], {bg: '#'+color.toString(16).padStart(6,'0')});
+    sign.position.set(0,7,1.4);
+    g.add(sign);
+    g.position.set(0,0,z);
+    scene.add(g);
+  }
+  gateway(START_Z-14, 0x1E824C, "MALOMBA AVENUE");
+  gateway(END_Z+14, 0x6E1F3B, "CITY LIMITS");
+
+  // ---- guide character (points toward the street he's introducing) ----
+  function addGuide(st){
+    const g = new THREE.Group();
+    const skin = 0xC68863, shirt = 0xE6483C;
+    const legL = box(0.35,1.5,0.35,0x2c2c30); legL.position.set(-0.25,0.75,0);
+    const legR = box(0.35,1.5,0.35,0x2c2c30); legR.position.set(0.25,0.75,0);
+    const torso = box(0.9,1.3,0.5,shirt); torso.position.y = 2.15;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.42,10,10), new THREE.MeshLambertMaterial({color:skin}));
+    head.position.y = 3.1;
+    const armBase = box(1.5,0.32,0.32,skin);
+    armBase.position.y = 2.5;
+    armBase.rotation.z = st.side>0 ? -0.55 : 0.55;
+    armBase.position.x = st.side>0 ? 0.7 : -0.7;
+    g.add(legL,legR,torso,head,armBase);
+
+    const arrow = makeLabelSprite(st.side>0 ? '↶ turn left' : '↷ turn right', { bg:'#0B4F8A', color:'#fff', border:'#0B4F8A', fontSize:34 });
+    arrow.scale.set(6.4,1.6,1);
+    arrow.position.set(0, 4.1, 0);
+    g.add(arrow);
+
+    g.position.set(st.side * (MAIN_HALF+1.6), 0, st.z - 7);
+    g.rotation.y = st.side>0 ? -Math.PI/2 : Math.PI/2;
+    scene.add(g);
+  }
+
+  // ---- car ----
+  function makePlateTexture(text){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#F3ECDA'; ctx.fillRect(0,0,256,128);
+    ctx.strokeStyle = '#1C1408'; ctx.lineWidth = 8; ctx.strokeRect(4,4,248,120);
+    ctx.fillStyle = '#1C1408'; ctx.font = '800 62px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 68);
+    return new THREE.CanvasTexture(c);
+  }
+  function buildCar(bodyColor, cabinColor, plateText){
+    const g = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color:bodyColor, metalness:0.75, roughness:0.25 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color:cabinColor, metalness:0.3, roughness:0.15 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.8,4.2), bodyMat); body.position.y = 0.75;
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.7,2.1), cabinMat); cabin.position.set(0,1.35,-0.2);
+    g.add(body, cabin);
+    const wheelGeo = new THREE.CylinderGeometry(0.42,0.42,0.32,14);
+    const wheelMat = new THREE.MeshStandardMaterial({color:0x141414, metalness:0.4, roughness:0.6});
+    const wheels = [];
+    [[-1.15,0.42,1.4],[1.15,0.42,1.4],[-1.15,0.42,-1.4],[1.15,0.42,-1.4]].forEach(p=>{
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.z = Math.PI/2;
+      w.position.set(p[0],p[1],p[2]);
+      g.add(w); wheels.push(w);
+    });
+    g.userData.wheels = wheels;
+    if(plateText){
+      const plateMat = new THREE.MeshBasicMaterial({ map:makePlateTexture(plateText) });
+      const rear = new THREE.Mesh(new THREE.PlaneGeometry(0.95,0.48), plateMat);
+      rear.position.set(0, 0.58, -2.13); rear.rotation.y = Math.PI;
+      const front = new THREE.Mesh(new THREE.PlaneGeometry(0.95,0.48), plateMat);
+      front.position.set(0, 0.58, 2.13);
+      g.add(rear, front);
+    }
+    return g;
+  }
+  const car = buildCar(0xD4AF37, 0x111318, 'KWM');
+  car.position.set(0, 0, START_Z + 6);
+  scene.add(car);
+  const carLightL = new THREE.PointLight(0xfff2cc, 0.6, 12); carLightL.position.set(0.9,0.7,2.3); car.add(carLightL);
+
+  // ---- ambient traffic (decorative) ----
+  const traffic = [];
+  [ {x:4.2, dir:1, speed:16, color:0xC9D6DF}, {x:-4.2, dir:1, speed:12, color:0x1a1a1a}, {x:4.2, dir:1, speed:20, color:0x7A1F41} ].forEach((t,i)=>{
+    const c = buildCar(t.color, 0x141414);
+    c.position.set(t.x, 0, START_Z + i*260);
+    scene.add(c);
+    traffic.push({ mesh:c, x:t.x, speed:t.speed });
+  });
+
+  // ============================================================
+  // STATE / CONTROLS
+  // ============================================================
+  let heading = 0; // 0 = facing +Z
+  let completedShown = false;
+  let speed = 0;
+  const MAX_FWD = 32, MAX_REV = -13, ACCEL = 24, BRAKE = 36, FRICTION = 14, TURN_RATE = 1.45;
+  const keys = { fwd:false, back:false, left:false, right:false };
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+  let activeTrigger = null;
+  const visited = new Set();
+  let bannerTimeout = null;
+
+  function showBanner(title){
+    document.getElementById('banner-title').textContent = title;
+    const b = document.getElementById('banner');
+    b.classList.add('show');
+    clearTimeout(bannerTimeout);
+    bannerTimeout = setTimeout(()=>b.classList.remove('show'), 2200);
+  }
+  function showItemPanel(item){
+    document.getElementById('panel-title').textContent = item.title;
+    const sub = document.getElementById('panel-sub');
+    sub.textContent = item.subtitle||''; sub.style.display = item.subtitle?'':'none';
+    const meta = document.getElementById('panel-meta');
+    meta.textContent = item.meta||''; meta.style.display = item.meta?'':'none';
+    document.getElementById('panel-list').innerHTML = (item.bullets||[]).map(b=>'<li>'+b+'</li>').join('');
+    document.getElementById('panel-tag-wrap').innerHTML = item.tag ? '<span class="tag">'+item.tag+'</span>' : '';
+    document.getElementById('panel').classList.add('show');
+  }
+  function showStreetPanel(st){
+    document.getElementById('panel-title').textContent = st.name;
+    const sub = document.getElementById('panel-sub');
+    sub.textContent = st.items.length+' stop'+(st.items.length>1?'s':''); sub.style.display='';
+    document.getElementById('panel-meta').style.display='none';
+    document.getElementById('panel-tag-wrap').innerHTML = '<span class="tag">STREET GUIDE</span>';
+    document.getElementById('panel-list').innerHTML = st.items.map(it=>{
+      const subLine = [it.subtitle, it.meta].filter(Boolean).join(' · ');
+      const bl = (it.bullets&&it.bullets.length) ? '<ul class="street-item-bullets">'+it.bullets.map(b=>'<li>'+b+'</li>').join('')+'</ul>' : '';
+      return '<li class="street-item"><div class="street-item-title">'+it.title+(it.tag?' <span class="tag" style="margin-left:6px;">'+it.tag+'</span>':'')+'</div>'+(subLine?'<div class="street-item-sub">'+subLine+'</div>':'')+bl+'</li>';
+    }).join('');
+    document.getElementById('panel').classList.add('show');
+  }
+  function hidePanel(){ document.getElementById('panel').classList.remove('show'); }
+  function markVisited(key){
+    if(visited.has(key)) return; visited.add(key);
+    const el = document.querySelector('.map-item[data-key="'+key+'"]');
+    if(el) el.classList.add('visited');
+  }
+  function activate(trig, key){
+    activeTrigger = trig;
+    const zoneLabel = document.getElementById('zone-label');
+    if(trig.kind === 'street'){
+      showBanner(trig.data.name);
+      showStreetPanel(trig.data);
+      zoneLabel.textContent = trig.data.name;
+    } else {
+      showBanner(trig.data.title);
+      showItemPanel(trig.data);
+      zoneLabel.textContent = trig.data.zone || zoneLabel.textContent;
+    }
+    markVisited(key);
+    document.getElementById('drive-hint').classList.add('hide');
+  }
+  function deactivate(){ activeTrigger = null; hidePanel(); }
+
+  function checkTriggers(){
+    let nearest = null, nearestKey = null, nearestD = Infinity;
+    TRIGGERS.forEach((t,i)=>{
+      const dx = t.x - car.position.x, dz = t.z - car.position.z;
+      const d = Math.sqrt(dx*dx+dz*dz);
+      if(d < t.radius && d < nearestD){ nearest = t; nearestD = d; nearestKey = i; }
+    });
+    if(nearest && nearest !== activeTrigger) activate(nearest, nearestKey);
+    else if(!nearest && activeTrigger) deactivate();
+  }
+
+  // guide callout: show while approaching an un-entered junction
+  const guideCallout = document.getElementById('guide-callout');
+  const guideText = document.getElementById('guide-text');
+  function updateGuideCallout(){
+    let target = null, bestDist = Infinity;
+    STREETS.forEach(st=>{
+      const aheadDist = st.z - car.position.z;
+      if(aheadDist > 6 && aheadDist < 150 && aheadDist < bestDist){ target = st; bestDist = aheadDist; }
+    });
+    if(target){
+      guideText.textContent = 'Guide: turn ' + (target.side>0?'right':'left') + ' ahead for ' + target.name;
+      guideCallout.classList.add('show');
+    } else {
+      guideCallout.classList.remove('show');
+    }
+  }
+
+  // ---- map overlay ----
+  const mapOverlay = document.getElementById('map-overlay');
+  const mapGroups = document.getElementById('map-groups');
+  (function buildMap(){
+    let html = '<div class="map-group"><h4>MALOMBA AVENUE</h4><button class="map-item" data-key="start"><span>'+START_INFO.title+'</span><small>Start</small></button></div>';
+    STREETS.forEach(st=>{
+      html += '<div class="map-group"><h4>'+st.name.toUpperCase()+'</h4>';
+      st.items.forEach((it,idx)=>{
+        html += '<button class="map-item" data-key="'+st.key+'-'+idx+'"><span>'+it.title+'</span><small>'+(it.meta||it.subtitle||'')+'</small></button>';
+      });
+      html += '</div>';
+    });
+    html += '<div class="map-group"><h4>CITY LIMITS</h4><button class="map-item" data-key="end"><span>'+END_INFO.title+'</span><small>Finish</small></button></div>';
+    mapGroups.innerHTML = html;
+  })();
+  // build a lookup from map key -> world position/heading
+  const mapTargets = {};
+  mapTargets['start'] = { x:0, z:START_Z+4, heading:0 };
+  mapTargets['end'] = { x:0, z:END_Z-10, heading:0 };
+  STREETS.forEach(st=>{
+    st.items.forEach((it,idx)=>{
+      const zOff = (idx % 2 === 0) ? 4.6 : -4.6;
+      mapTargets[st.key+'-'+idx] = { x: st.side*(MAIN_HALF+it.d) - st.side*6, z: st.z + zOff, heading: st.side>0 ? Math.PI/2 : -Math.PI/2 };
+    });
+  });
+  mapGroups.addEventListener('click', e=>{
+    const btn = e.target.closest('.map-item');
+    if(!btn) return;
+    const t = mapTargets[btn.dataset.key];
+    if(t){ car.position.set(t.x,0,t.z); heading = t.heading; speed = 0; }
+    mapOverlay.hidden = true;
+    checkTriggers();
+  });
+  document.getElementById('map-btn').addEventListener('click', ()=> mapOverlay.hidden = false);
+  document.getElementById('map-close').addEventListener('click', ()=> mapOverlay.hidden = true);
+  document.getElementById('complete-close').addEventListener('click', ()=> document.getElementById('complete-modal').hidden = true);
+  document.getElementById('complete-modal').addEventListener('click', e=>{ if(e.target.id==='complete-modal') e.currentTarget.hidden = true; });
+  mapOverlay.addEventListener('click', e=>{ if(e.target===mapOverlay) mapOverlay.hidden = true; });
+  document.getElementById('panel-close').addEventListener('click', deactivate);
+
+  // ---- input ----
+  window.addEventListener('keydown', e=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W') keys.fwd = true;
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S') keys.back = true;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') keys.left = true;
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') keys.right = true;
+  }, {passive:false});
+  window.addEventListener('keyup', e=>{
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W') keys.fwd = false;
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S') keys.back = false;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') keys.left = false;
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') keys.right = false;
+  });
+  function bindHold(id, prop){
+    const el = document.getElementById(id);
+    const on = ev=>{ ev.preventDefault(); keys[prop]=true; document.getElementById('drive-hint').classList.add('hide'); };
+    const off = ev=>{ ev.preventDefault(); keys[prop]=false; };
+    el.addEventListener('pointerdown', on);
+    el.addEventListener('pointerup', off);
+    el.addEventListener('pointerleave', off);
+    el.addEventListener('pointercancel', off);
+  }
+  bindHold('a-btn','fwd'); bindHold('b-btn','back'); bindHold('l-btn','left'); bindHold('r-btn','right');
+
+  // ============================================================
+  // LOOP
+  // ============================================================
+  let lastTs = 0;
+  const camPos = new THREE.Vector3(0,7,-14);
+  const camLook = new THREE.Vector3();
+  let bounceTime = 0;
+  let cameraMode = 'chase'; // 'chase' | 'top'
+  const compassDial = document.getElementById('compass-dial');
+  document.getElementById('view-btn').addEventListener('click', ()=>{
+    cameraMode = cameraMode === 'chase' ? 'top' : 'chase';
+  });
+
+  function onResize(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  window.addEventListener('resize', onResize);
+
+  function loop(ts){
+    if(!lastTs) lastTs = ts;
+    let dt = (ts-lastTs)/1000; lastTs = ts;
+    dt = Math.min(dt, 0.05);
+
+    // throttle / brake
+    if(keys.fwd) speed += ACCEL*dt;
+    else if(keys.back) speed -= BRAKE*dt;
+    else {
+      if(speed>0) speed = Math.max(0, speed-FRICTION*dt);
+      else if(speed<0) speed = Math.min(0, speed+FRICTION*dt);
+    }
+    speed = clamp(speed, MAX_REV, MAX_FWD);
+
+    // steering — only meaningful while rolling
+    if(Math.abs(speed) > 0.12){
+      const steerDir = (keys.left?1:0) + (keys.right?-1:0);
+      const speedSign = speed > 0 ? 1 : -1;
+      heading += steerDir * TURN_RATE * dt * speedSign;
+    }
+
+    // move, but the guard rails keep the car from leaving the road network —
+    // try the full step, then slide along one axis, then just stop before the rail
+    const stepX = Math.sin(heading) * speed * dt;
+    const stepZ = Math.cos(heading) * speed * dt;
+    const nx = car.position.x + stepX, nz = car.position.z + stepZ;
+    if(isOnRoad(nx, nz)){
+      car.position.x = nx; car.position.z = nz;
+    } else if(isOnRoad(nx, car.position.z)){
+      car.position.x = nx; speed *= 0.6;
+    } else if(isOnRoad(car.position.x, nz)){
+      car.position.z = nz; speed *= 0.6;
+    } else {
+      speed *= 0.3;
+    }
+    car.position.x = clamp(car.position.x, -(LOOP_X+40), LOOP_X+40);
+    car.position.z = clamp(car.position.z, START_Z-60, END_Z+60);
+    car.rotation.y = heading;
+
+    // suspension bounce + wheel spin
+    const moving = Math.abs(speed) > 0.3;
+    if(moving){ bounceTime += dt; car.position.y = Math.sin(bounceTime*16)*0.03; }
+    else car.position.y = 0;
+    car.userData.wheels.forEach(w => w.rotation.x -= speed*dt*0.9);
+
+    // ambient traffic
+    traffic.forEach(t=>{
+      t.mesh.position.z += t.speed*dt;
+      if(t.mesh.position.z > END_Z+30) t.mesh.position.z = START_Z-30;
+      t.mesh.userData.wheels.forEach(w => w.rotation.x -= t.speed*dt*0.9);
+    });
+
+    // camera — chase view, or a top-down map view the player can switch to
+    const forward = new THREE.Vector3(Math.sin(heading),0,Math.cos(heading));
+    if(cameraMode === 'chase'){
+      camera.up.set(0,1,0);
+      const desiredPos = new THREE.Vector3(
+        car.position.x - forward.x*11,
+        5.5,
+        car.position.z - forward.z*11
+      );
+      camPos.lerp(desiredPos, 1-Math.pow(0.001, dt));
+      camera.position.copy(camPos);
+      const desiredLook = new THREE.Vector3(car.position.x + forward.x*6, 1.4, car.position.z + forward.z*6);
+      camLook.lerp(desiredLook, 1-Math.pow(0.0001, dt));
+      camera.lookAt(camLook);
+    } else {
+      camera.up.set(0,0,-1);
+      const desiredPos = new THREE.Vector3(car.position.x, 145, car.position.z + 0.01);
+      camPos.lerp(desiredPos, 1-Math.pow(0.0006, dt));
+      camera.position.copy(camPos);
+      const desiredLook = new THREE.Vector3(car.position.x, 0, car.position.z);
+      camLook.lerp(desiredLook, 1-Math.pow(0.0006, dt));
+      camera.lookAt(camLook);
+    }
+
+    // compass dial — rotates opposite the car's heading so N always tracks true north
+    compassDial.style.transform = 'rotate(' + (-heading*180/Math.PI) + 'deg)';
+
+    checkTriggers();
+    updateGuideCallout();
+
+    beacons.forEach(b=>{ b.scale.setScalar(1 + Math.sin(ts*0.005)*0.4); });
+
+    // robots amble in a slow loop around their spawn point
+    ROBOTS.forEach(r=>{
+      const ang = r.phase + ts*0.00035*r.speed;
+      const nx = r.homeX + Math.cos(ang)*r.radius;
+      const nz = r.homeZ + Math.sin(ang)*r.radius;
+      const dx = nx - r.mesh.position.x, dz = nz - r.mesh.position.z;
+      if(Math.abs(dx)+Math.abs(dz) > 0.0005) r.mesh.rotation.y = Math.atan2(dx,dz);
+      r.mesh.position.x = nx; r.mesh.position.z = nz;
+      r.mesh.position.y = Math.abs(Math.sin(ts*0.006*r.speed))*0.12;
+    });
+
+    const pct = Math.round(clamp((car.position.z-START_Z)/(END_Z-START_Z),0,1)*100);
+    document.getElementById('progress-fill').style.width = pct+'%';
+    document.getElementById('progress-pct').textContent = pct+'%';
+    if(pct >= 100 && !completedShown){
+      completedShown = true;
+      document.getElementById('complete-modal').hidden = false;
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- start ----------
+  const startScreen = document.getElementById('start-screen');
+  const gameEl = document.getElementById('game');
+  let journeyStarted = false;
+  function beginGame(){
+    startScreen.style.display = 'none';
+    gameEl.hidden = false;
+    onResize();
+    requestAnimationFrame(loop);
+    setTimeout(()=> document.getElementById('drive-hint').classList.add('hide'), 5500);
+    journeyStarted = true;
+    startMalombatunes(); // begin playing the moment the engine starts — this click is the user gesture that allows it
+  }
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(()=>{ document.getElementById('loading-note').style.display='none'; });
+  } else {
+    document.getElementById('loading-note').style.display='none';
+  }
+  document.getElementById('start-btn').addEventListener('click', beginGame);
+
+  // ---------- Malombatunes — YouTube audio playing behind the scenes, only the bar above is visible ----------
+  let ytPlayer = null, ytReady = false;
+  const musicBar = document.getElementById('music-bar');
+  const musicToggleBtn = document.getElementById('music-toggle');
+
+  const ytTag = document.createElement('script');
+  ytTag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytTag);
+
+  window.onYouTubeIframeAPIReady = function(){
+    ytPlayer = new YT.Player('yt-player-frame', {
+      height: '2', width: '2', videoId: 'kmTRKdNijZI',
+      playerVars: { autoplay: 0, controls: 0, modestbranding: 1, rel: 0 },
+      events: {
+        onReady: function(){
+          ytReady = true;
+          if(journeyStarted) startMalombatunes(); // engine was already started before the player finished loading
+        },
+        onStateChange: function(e){
+          const playing = e.data === YT.PlayerState.PLAYING;
+          musicBar.classList.toggle('playing', playing);
+          musicToggleBtn.textContent = playing ? '⏸' : '▶️';
+        }
+      }
+    });
+  };
+
+  function startMalombatunes(){
+    if(ytReady && ytPlayer) ytPlayer.playVideo();
+  }
+  function toggleMalombatunes(){
+    if(!ytReady || !ytPlayer) return;
+    const state = ytPlayer.getPlayerState();
+    if(state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  }
+  // the whole bar is clickable — tapping it toggles play/pause; it visually enlarges while playing
+  musicBar.addEventListener('click', toggleMalombatunes);
+
+  // best-effort deterrents against casual right-click/devtools use — cosmetic only, see chat note
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if(k === 'f12') e.preventDefault();
+    if(e.ctrlKey && e.shiftKey && (k === 'i' || k === 'j' || k === 'c')) e.preventDefault();
+    if(e.ctrlKey && k === 'u') e.preventDefault();
+  });
+
+  // ---------- license-photo upload ----------
+  const licPhotoInput = document.getElementById('lic-photo-input');
+  licPhotoInput.addEventListener('change', function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const content = document.getElementById('lic-photo-content');
+      const img = document.createElement('img');
+      img.id = 'lic-photo-content';
+      img.alt = 'Your photo';
+      img.src = ev.target.result;
+      content.replaceWith(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  // if the default LinkedIn photo URL ever fails to load, fall back to the placeholder emoji instead of a broken image
+  window.handleLicPhotoError = function(el){
+    const span = document.createElement('span');
+    span.id = 'lic-photo-content';
+    span.textContent = '🧑🏾‍💻';
+    el.replaceWith(span);
+  };
+})();
+</script>
+</body>
+</html>
