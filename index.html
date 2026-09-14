@@ -246,15 +246,16 @@
     #hud{ padding:12px; }
     #zone-pill{ font-size:11px; padding:7px 12px; }
     #progress-wrap, #map-btn, #view-btn{ font-size:11px; padding:7px 10px; }
-    #music-bar{ padding:6px 6px 6px 10px; order:9; flex-basis:100%; justify-content:center; margin-top:6px; }
-    .music-title{ font-size:11px; }
+    #music-bar{ padding:8px; order:9; flex-basis:auto; justify-content:center; margin-top:6px; width:38px; height:38px; border-radius:50%; gap:0; }
+    #music-bar.playing{ padding:8px; transform:scale(1.12); }
+    #music-bar .music-eq, .music-title{ display:none; }
+    #music-toggle{ width:100%; height:100%; }
     #progress-bar{ width:56px; }
     .start-card h1{ font-size:clamp(1.8rem, 9vw, 2.6rem); }
   }
   @media (max-width:380px){
     #hud > div:last-child{ gap:6px; }
     #progress-wrap span, #progress-bar{ display:none; }
-    .music-title{ display:none; }
   }
   @media (min-width:1400px){
     #panel-inner{ max-width:760px; }
@@ -672,6 +673,14 @@
     }
     return false;
   }
+  function hitsBuilding(x, z){
+    for(let i=0;i<BUILDING_COLLIDERS.length;i++){
+      const b = BUILDING_COLLIDERS[i];
+      if(Math.abs(x-b.x) < b.hw && Math.abs(z-b.z) < b.hd) return true;
+    }
+    return false;
+  }
+  function isDrivable(x, z){ return isOnRoad(x,z) && !hitsBuilding(x,z); }
 
   // ---- guard rails along every corridor edge, with gaps left open at junctions/roundabouts ----
   function addRailPost(x,z){
@@ -1171,6 +1180,7 @@
 
   // ---- buildings for resume items: sleek glass towers with a gold crown ----
   const TRIGGERS = []; // {x,z,radius,kind,data}
+  const BUILDING_COLLIDERS = []; // {x,z,hw,hd} — solid footprints the car can't drive through
   const beacons = [];
   const PALETTES = {
     corporate: ['#0c1830','#0b2438','#0d2f28','#1a1f3d'],
@@ -1288,6 +1298,7 @@
     g.position.set(worldX, 0, worldZ);
     scene.add(g);
     addGantry(worldX, roadZ !== undefined ? roadZ : worldZ, item);
+    BUILDING_COLLIDERS.push({ x:worldX, z:worldZ, hw:3.8, hd:3.8 });
     TRIGGERS.push({ x:worldX, z:worldZ, radius:11, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
   }
 
@@ -1323,6 +1334,7 @@
     g.position.set(worldX, 0, worldZ);
     scene.add(g);
     addGantry(worldX, roadZ !== undefined ? roadZ : worldZ, Object.assign({}, item, { title:'Embassy of '+item.embassy, tag:'OUTSIDE KENYA' }));
+    BUILDING_COLLIDERS.push({ x:worldX, z:worldZ, hw:5, hd:4.5 });
     TRIGGERS.push({ x:worldX, z:worldZ, radius:12, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
   }
 
@@ -1680,16 +1692,16 @@
       heading += steerDir * TURN_RATE * dt * speedSign;
     }
 
-    // move, but the guard rails keep the car from leaving the road network —
-    // try the full step, then slide along one axis, then just stop before the rail
+    // move, but the guard rails keep the car from leaving the road network,
+    // and buildings themselves are solid — try the full step, then slide along one axis, then just stop
     const stepX = Math.sin(heading) * speed * dt;
     const stepZ = Math.cos(heading) * speed * dt;
     const nx = car.position.x + stepX, nz = car.position.z + stepZ;
-    if(isOnRoad(nx, nz)){
+    if(isDrivable(nx, nz)){
       car.position.x = nx; car.position.z = nz;
-    } else if(isOnRoad(nx, car.position.z)){
+    } else if(isDrivable(nx, car.position.z)){
       car.position.x = nx; speed *= 0.6;
-    } else if(isOnRoad(car.position.x, nz)){
+    } else if(isDrivable(car.position.x, nz)){
       car.position.z = nz; speed *= 0.6;
     } else {
       speed *= 0.3;
