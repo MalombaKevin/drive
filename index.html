@@ -53,8 +53,8 @@
   }
   .lic-photo img{ width:100%; height:100%; object-fit:cover; }
   .lic-photo .cam-badge{
-    position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); color:#F3ECDA;
-    font-size:7.5px; font-weight:700; letter-spacing:.02em; text-align:center; padding:2px 0; font-family:'Inter',sans-serif;
+    position:absolute; right:3px; bottom:3px; width:16px; height:16px; border-radius:50%;
+    background:rgba(0,0,0,.65); color:#F3ECDA; font-size:9px; display:flex; align-items:center; justify-content:center;
   }
   .lic-photo input{ display:none; }
   .lic-fields{ flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
@@ -159,12 +159,14 @@
     background:var(--glass-bg); backdrop-filter:blur(20px) saturate(170%); -webkit-backdrop-filter:blur(20px) saturate(170%);
     padding:12px 26px; border-radius:16px; border:1px solid rgba(212,175,55,.55);
     box-shadow:0 14px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
-    font-family:'Baloo 2',cursive; font-weight:700; text-align:center; opacity:0; pointer-events:none;
+    font-family:'Baloo 2',cursive; font-weight:700; text-align:center; opacity:0; pointer-events:none; cursor:pointer;
     transition:opacity .35s ease, transform .35s ease; max-width:88vw;
   }
-  #banner.show{ opacity:1; transform:translate(-50%,0); }
+  #banner.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  #banner:active{ transform:translate(-50%,0) scale(.97); }
   #banner .eyebrow{ font-family:'Inter',sans-serif; font-weight:700; font-size:10.5px; color:var(--gold); letter-spacing:.08em; display:block; margin-bottom:2px;}
   #banner h2{ margin:0; font-size:clamp(1.05rem,4vw,1.4rem); color:#F8F3E4;}
+  #banner .tap-hint{ display:block; font-family:'Inter',sans-serif; font-weight:600; font-size:10px; color:#9AA4BC; margin-top:3px; }
 
   /* content panel — floating glass card */
   #panel{ position:absolute; left:0; right:0; bottom:0; z-index:25; transform:translateY(130%); transition:transform .34s cubic-bezier(.2,.8,.3,1); display:flex; justify-content:center; padding:0 14px 34px; pointer-events:none;}
@@ -244,7 +246,7 @@
     #hud{ padding:12px; }
     #zone-pill{ font-size:11px; padding:7px 12px; }
     #progress-wrap, #map-btn, #view-btn{ font-size:11px; padding:7px 10px; }
-    #music-bar{ padding:6px 6px 6px 10px; }
+    #music-bar{ padding:6px 6px 6px 10px; order:9; flex-basis:100%; justify-content:center; margin-top:6px; }
     .music-title{ font-size:11px; }
     #progress-bar{ width:56px; }
     .start-card h1{ font-size:clamp(1.8rem, 9vw, 2.6rem); }
@@ -272,7 +274,7 @@
     <div class="lic-body">
       <label class="lic-photo" for="lic-photo-input" id="lic-photo">
         <img id="lic-photo-content" alt="Kevin William Malomba" onerror="window.handleLicPhotoError && window.handleLicPhotoError(this)" src="https://media.licdn.com/dms/image/v2/D4D03AQF5Gmm4JVd_Vw/profile-displayphoto-crop_800_800/B4DZroOBWfG0AI-/0/1764832583858?e=1790812800&v=beta&t=BmaABGutqauNASX_iR-FFZjXUJrYJ0WA9VEHAd9853o">
-        <span class="cam-badge">📷 Add photo</span>
+        <span class="cam-badge">📷</span>
         <input type="file" id="lic-photo-input" accept="image/*">
       </label>
       <div class="lic-fields">
@@ -322,7 +324,7 @@
   </div>
 
   <div id="guide-callout"><span class="figure">🧑🏾‍✈️</span><span id="guide-text"></span></div>
-  <div id="banner"><span class="eyebrow">WELCOME TO</span><h2 id="banner-title"></h2></div>
+  <div id="banner"><span class="eyebrow">WELCOME TO</span><h2 id="banner-title"></h2><span class="tap-hint">Tap for details</span></div>
 
   <div id="panel">
     <div id="panel-inner">
@@ -340,7 +342,7 @@
   <div id="controls">
     <div id="pedal-group">
       <button class="dbtn" id="a-btn" aria-label="Accelerate">A<small>GAS</small></button>
-      <button class="dbtn" id="b-btn" aria-label="Brake / reverse">B<small>BRAKE</small></button>
+      <button class="dbtn" id="b-btn" aria-label="Reverse">R<small>REV</small></button>
     </div>
     <div id="steer-group">
       <button class="dbtn" id="l-btn" aria-label="Steer left">L<small>LEFT</small></button>
@@ -1150,6 +1152,23 @@
     return sprite;
   }
 
+  // ---- overhead gantry sign — the achievement label spans the road itself, like a highway sign you drive under ----
+  function addGantry(worldX, roadZ, item, halfWidth){
+    halfWidth = halfWidth || 7.5;
+    const h = 8.5;
+    const postMat = new THREE.MeshStandardMaterial({ color:0x2c2c30, metalness:0.5, roughness:0.4 });
+    const postA = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,h,8), postMat);
+    postA.position.set(worldX, h/2, roadZ-halfWidth);
+    const postB = postA.clone(); postB.position.z = roadZ+halfWidth;
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.55, halfWidth*2+1), postMat);
+    beam.position.set(worldX, h, roadZ);
+    scene.add(postA, postB, beam);
+    const sub = [item.subtitle, item.meta].filter(Boolean).join(' · ');
+    const plaque = makePlaqueSprite(item.title, sub, item.tag);
+    plaque.position.set(worldX, h-1.15, roadZ);
+    scene.add(plaque);
+  }
+
   // ---- buildings for resume items: sleek glass towers with a gold crown ----
   const TRIGGERS = []; // {x,z,radius,kind,data}
   const beacons = [];
@@ -1163,7 +1182,7 @@
     creative:  [0xd99bff, 0xff9bd0, 0x9bffea, 0xffd39b],
     grand:     [0xf2c88f, 0xff9bbd, 0x9bd0ff, 0xc8ff9b],
   };
-  function addBuilding(worldX, worldZ, style, height, item, streetName, idx){
+  function addBuilding(worldX, worldZ, style, height, item, streetName, idx, roadZ){
     const g = new THREE.Group();
     const h = height || 12;
     const gold = 0xD4AF37;
@@ -1260,11 +1279,7 @@
       }
     }
 
-    // ground-level location plaque — the naming lives outside the tower, like a landmark placard
-    const sub = [item.subtitle, item.meta].filter(Boolean).join(' · ');
-    const plaque = makePlaqueSprite(item.title, sub, item.tag);
-    plaque.position.set(0, 2.7, 4.6);
-    g.add(plaque);
+    // the achievement label now hangs as a gantry sign spanning the road, not a ground plaque
     // reflective forecourt in place of a plain parking patch
     const lot = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 4.5), new THREE.MeshStandardMaterial({color:0x1c2333, metalness:0.5, roughness:0.4}));
     lot.rotation.x = -Math.PI/2;
@@ -1272,11 +1287,12 @@
     g.add(lot);
     g.position.set(worldX, 0, worldZ);
     scene.add(g);
+    addGantry(worldX, roadZ !== undefined ? roadZ : worldZ, item);
     TRIGGERS.push({ x:worldX, z:worldZ, radius:11, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
   }
 
   // ---- an embassy building, for the one resume stop that happens outside Kenya ----
-  function addEmbassy(worldX, worldZ, item, streetName){
+  function addEmbassy(worldX, worldZ, item, streetName, roadZ){
     const g = new THREE.Group();
     const marble = new THREE.MeshStandardMaterial({ color:0xEDE7DA, roughness:0.55, metalness:0.08 });
     const gold = new THREE.MeshStandardMaterial({ color:0xD4AF37, metalness:0.9, roughness:0.22 });
@@ -1298,14 +1314,15 @@
     flag.scale.set(4.4, 1.5, 1);
     flag.position.set(4.4, 8.8, -2.2);
     g.add(flag);
-    const plaque = makePlaqueSprite('Embassy of '+item.embassy, item.title + (item.meta ? ' · '+item.meta : ''), 'OUTSIDE KENYA');
-    plaque.position.set(0, 2.8, 4.4);
+    const plaque = makeLabelSprite('Embassy of '+item.embassy, { fontSize:30 });
+    plaque.position.set(0, 8.2, 0);
     g.add(plaque);
     const lot = new THREE.Mesh(new THREE.PlaneGeometry(8,4.5), new THREE.MeshStandardMaterial({color:0x1c2333, metalness:0.5, roughness:0.4}));
     lot.rotation.x = -Math.PI/2; lot.position.set(0,0.03,4.8);
     g.add(lot);
     g.position.set(worldX, 0, worldZ);
     scene.add(g);
+    addGantry(worldX, roadZ !== undefined ? roadZ : worldZ, Object.assign({}, item, { title:'Embassy of '+item.embassy, tag:'OUTSIDE KENYA' }));
     TRIGGERS.push({ x:worldX, z:worldZ, radius:12, kind:'item', data:Object.assign({}, item, { zone:streetName }) });
   }
 
@@ -1322,8 +1339,8 @@
       const wx = st.side * (MAIN_HALF + it.d);
       const wz = st.z + zOff;
       const h = it.current ? 22 : (12 + (idx%3)*3.2);
-      if(it.embassy) addEmbassy(wx, wz, it, st.name);
-      else addBuilding(wx, wz, st.style, h, it, st.name, idx);
+      if(it.embassy) addEmbassy(wx, wz, it, st.name, st.z);
+      else addBuilding(wx, wz, st.style, h, it, st.name, idx, st.z);
     });
 
     TRIGGERS.push({ x: st.side*(MAIN_HALF+2), z: st.z, radius:9, kind:'street', data:st });
@@ -1471,15 +1488,13 @@
 
   let activeTrigger = null;
   const visited = new Set();
-  let bannerTimeout = null;
+  let pendingTrigger = null;
 
   function showBanner(title){
     document.getElementById('banner-title').textContent = title;
-    const b = document.getElementById('banner');
-    b.classList.add('show');
-    clearTimeout(bannerTimeout);
-    bannerTimeout = setTimeout(()=>b.classList.remove('show'), 2200);
+    document.getElementById('banner').classList.add('show');
   }
+  function hideBanner(){ document.getElementById('banner').classList.remove('show'); }
   function showItemPanel(item){
     document.getElementById('panel-title').textContent = item.title;
     const sub = document.getElementById('panel-sub');
@@ -1503,6 +1518,12 @@
     }).join('');
     document.getElementById('panel').classList.add('show');
   }
+  function openPendingDetail(){
+    if(!pendingTrigger) return;
+    if(pendingTrigger.kind === 'street') showStreetPanel(pendingTrigger.data);
+    else showItemPanel(pendingTrigger.data);
+  }
+  document.getElementById('banner').addEventListener('click', openPendingDetail);
   function hidePanel(){ document.getElementById('panel').classList.remove('show'); }
   function markVisited(key){
     if(visited.has(key)) return; visited.add(key);
@@ -1511,20 +1532,19 @@
   }
   function activate(trig, key){
     activeTrigger = trig;
+    pendingTrigger = trig;
     const zoneLabel = document.getElementById('zone-label');
     if(trig.kind === 'street'){
       showBanner(trig.data.name);
-      showStreetPanel(trig.data);
       zoneLabel.textContent = trig.data.name;
     } else {
       showBanner(trig.data.title);
-      showItemPanel(trig.data);
       zoneLabel.textContent = trig.data.zone || zoneLabel.textContent;
     }
     markVisited(key);
     document.getElementById('drive-hint').classList.add('hide');
   }
-  function deactivate(){ activeTrigger = null; hidePanel(); }
+  function deactivate(){ activeTrigger = null; pendingTrigger = null; hideBanner(); hidePanel(); }
 
   function checkTriggers(){
     let nearest = null, nearestKey = null, nearestD = Infinity;
@@ -1592,7 +1612,7 @@
   document.getElementById('complete-close').addEventListener('click', ()=> document.getElementById('complete-modal').hidden = true);
   document.getElementById('complete-modal').addEventListener('click', e=>{ if(e.target.id==='complete-modal') e.currentTarget.hidden = true; });
   mapOverlay.addEventListener('click', e=>{ if(e.target===mapOverlay) mapOverlay.hidden = true; });
-  document.getElementById('panel-close').addEventListener('click', deactivate);
+  document.getElementById('panel-close').addEventListener('click', hidePanel);
 
   // ---- input ----
   window.addEventListener('keydown', e=>{
@@ -1777,7 +1797,7 @@
 
   window.onYouTubeIframeAPIReady = function(){
     ytPlayer = new YT.Player('yt-player-frame', {
-      height: '2', width: '2', videoId: 'kmTRKdNijZI',
+      height: '2', width: '2', videoId: 'HXzrN2I6b4Y',
       playerVars: { autoplay: 0, controls: 0, modestbranding: 1, rel: 0 },
       events: {
         onReady: function(){
