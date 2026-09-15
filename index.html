@@ -148,15 +148,17 @@
 
   /* guide callout */
   #guide-callout{
-    position:absolute; top:66px; left:50%; transform:translate(-50%,-10px); z-index:29;
+    position:absolute; top:66px; left:50%; transform:translate(-50%,-10px) scale(.9); z-index:29;
     background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%);
-    color:#F3ECDA; padding:10px 18px; border-radius:999px; border:1px solid var(--glass-border);
-    font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; opacity:0;
+    color:#F3ECDA; padding:8px 20px 8px 8px; border-radius:999px; border:1px solid rgba(212,175,55,.5);
+    font-size:14px; font-weight:800; font-family:'Baloo 2',cursive; display:flex; align-items:center; gap:10px; opacity:0;
     transition:opacity .3s ease, transform .3s ease; pointer-events:none; max-width:90vw; text-align:center;
     box-shadow:0 8px 24px rgba(0,0,0,.25);
   }
-  #guide-callout.show{ opacity:1; transform:translate(-50%,0); }
-  #guide-callout .figure{ font-size:18px; }
+  #guide-callout.show{ opacity:1; transform:translate(-50%,0) scale(1); }
+  #guide-callout .figure{
+    width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid var(--gold); flex:0 0 auto;
+  }
 
   /* welcome banner — frosted glass, gold trim */
   #banner{
@@ -356,7 +358,7 @@
     <div id="compass-label">HEADING</div>
   </div>
 
-  <div id="guide-callout"><span class="figure">🧑🏾‍✈️</span><span id="guide-text"></span></div>
+  <div id="guide-callout"><img class="figure" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'figure',textContent:'🧑🏾\u200d✈️',style:'font-size:18px'}))" src="https://media.licdn.com/dms/image/v2/D4D03AQF5Gmm4JVd_Vw/profile-displayphoto-crop_800_800/B4DZroOBWfG0AI-/0/1764832583858?e=1790812800&v=beta&t=BmaABGutqauNASX_iR-FFZjXUJrYJ0WA9VEHAd9853o"><span id="guide-text"></span></div>
   <div id="banner"><span class="eyebrow">WELCOME TO</span><h2 id="banner-title"></h2><span class="tap-hint">Tap for details</span></div>
 
   <div id="panel">
@@ -1750,7 +1752,7 @@
       if(aheadDist > 6 && aheadDist < 150 && aheadDist < bestDist){ target = st; bestDist = aheadDist; }
     });
     if(target){
-      guideText.textContent = 'Guide: turn ' + (target.side>0?'right':'left') + ' ahead for ' + target.name;
+      guideText.textContent = target.name;
       guideCallout.classList.add('show');
     } else {
       guideCallout.classList.remove('show');
